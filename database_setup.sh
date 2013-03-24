@@ -15,4 +15,9 @@ createdb -U postgres -O blackosprey blackosprey
 psql -U postgres -d blackosprey -c "CREATE EXTENSION postgis;"
 psql -U postgres -d blackosprey -c "CREATE EXTENSION postgis_topology;"
 
+psql -U postgres -d blackosprey -c "GRANT SELECT, INSERT, UPDATE, DELETE ON spatial_ref_sys TO blackosprey;"
+psql -U postgres -d blackosprey -c "GRANT SELECT, INSERT, UPDATE, DELETE ON geography_columns TO blackosprey;"
+psql -U postgres -d blackosprey -c "GRANT SELECT, INSERT, UPDATE, DELETE ON geometry_columns TO blackosprey;"
+psql -U postgres -d blackosprey -c "GRANT SELECT, INSERT, UPDATE, DELETE ON raster_columns TO blackosprey;"
+psql -U postgres -d blackosprey -c "GRANT SELECT, INSERT, UPDATE, DELETE ON raster_overviews TO blackosprey;"
 

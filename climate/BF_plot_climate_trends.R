@@ -3,8 +3,8 @@ library(zoo)
 #Function to plot watershed-level PRISM-based climate trends
 
 #df for testing
-df <- read.csv("/Users/tcormier/Documents/test/climate_plotting/prism_1070003.csv")
-outdir <- "/Users/tcormier/Documents/test/climate_plotting/plots/"
+#df <- read.csv("/Users/tcormier/Documents/test/climate_plotting/prism_1070003.csv")
+#outdir <- "/Users/tcormier/Documents/test/climate_plotting/plots/"
 
 prepPRISM <- function(df) {
 #divide ppt by 100,000 to get to m and temps by 100 to get to deg C.

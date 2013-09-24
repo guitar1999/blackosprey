@@ -25,7 +25,7 @@ do
 		gdal_rasterize -at -a HUC_8_NUM -a_nodata 0 -init 0 -te $ll $ur -tr $tr huc_${temp}_${huc}.shp mask_${temp}_${huc}.tif
 
 		# Get the zonal stats
-		/Volumes/BlackOsprey/GIS_Data/scripts/temperature/huc8_temp_zone_stats_calculator.py $raster mask_${temp}_${huc}.tif $temp
+		/Volumes/BlackOsprey/GIS_Data/git/blackosprey/climate/huc8_temp_zone_stats_calculator.py $raster mask_${temp}_${huc}.tif $temp
 		
 		# Clean up the rasterized file
 		/bin/rm mask_${temp}_${huc}.tif

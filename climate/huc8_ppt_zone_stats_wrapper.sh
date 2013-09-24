@@ -23,7 +23,7 @@ do
 		gdal_rasterize -at -a HUC_8_NUM -a_nodata 0 -init 0 -te $ll $ur -tr $tr huc_${huc}.shp mask_${huc}.tif
 
 		# Get the zonal stats
-		/Volumes/BlackOsprey/GIS_Data/scripts/ppt/huc8_ppt_zone_stats_calculator.py $raster mask_${huc}.tif
+		/Volumes/BlackOsprey/GIS_Data/git/blackosprey/climate/huc8_ppt_zone_stats_calculator.py $raster mask_${huc}.tif
 		
 		# Clean up the rasterized file
 		/bin/rm mask_${huc}.tif

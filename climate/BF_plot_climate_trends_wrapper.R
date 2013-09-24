@@ -25,6 +25,8 @@ for (huc in hucs) {
     df <- dbGetQuery(con, dfquery)
 	wsquery <- paste("SELECT hu_8_name FROM nhd_hu8_watersheds WHERE huc_8_num = ", huc, sep='')
     ws <- dbGetQuery(con, wsquery)
+
+    print(paste("Working on huc ", huc, " - ", ws, sep=""))
 	#format ppt, tmax, and tmin mean colums by dividing by 100 to get to mm and deg C.
 	df.form <- prepPRISM(df)
 	

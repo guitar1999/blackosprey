@@ -3,8 +3,8 @@ library(zoo)
 #Function to plot watershed-level PRISM-based climate trends
 
 #df for testing
-#df <- read.csv("/Users/tcormier/Documents/test/climate_plotting/prism_1070003.csv")
-#outdir <- "/Users/tcormier/Documents/test/climate_plotting/plots/"
+df <- read.csv("/Users/tcormier/Documents/test/climate_plotting/prism_1070003.csv")
+outdir <- "/Users/tcormier/Documents/test/climate_plotting/plots/"
 
 prepPRISM <- function(df) {
 #divide ppt by 100,000 to get to m and temps by 100 to get to deg C.
@@ -18,7 +18,7 @@ return(df)
 prismAnnMean <- function(df) {
   #pdata <- prepPRISM(df)
   #pdata <- df
-  years <- unique(pdata$prism_year)
+  years <- unique(df$prism_year)
   
   #calc annual average
   ann.mean <- as.data.frame(matrix(data=NA, nrow=length(years), ncol=4))
@@ -48,7 +48,7 @@ prism_tsMean <- function(df){
 
 #Calculate yearly anomalies. df is the monthly prism data.
 prismAnom <- function (df) {
-  #calc annual means from monthly data
+  #calc annual means from monthly data - df should be monthly data
   adata <- prismAnnMean(df)
   
   #calc overall mean for entire time series
@@ -64,11 +64,11 @@ prismAnom <- function (df) {
   return(p.anom)
 }#end function
   
-plotAnom <- function(p.anom, colname) {
+plotAnom <- function(p.anom, adata, colname) {
   #setting up for plotting
-  pos <- as.data.frame(matrix(data=NA, nrow=nrow(adata), ncol=3))
+  pos <- as.data.frame(matrix(data=NA, nrow=nrow(p.anom), ncol=3))
   names(pos) <- names(p.anom)
-  neg <- as.data.frame(matrix(data=NA, nrow=nrow(adata), ncol=3))
+  neg <- as.data.frame(matrix(data=NA, nrow=nrow(p.anom), ncol=3))
   names(neg) <- names(p.anom)
   
   pos[[colname]][p.anom[[colname]] >= 0] <- p.anom[[colname]][p.anom[[colname]] >= 0]
@@ -77,15 +77,15 @@ plotAnom <- function(p.anom, colname) {
   n.pos <- length(pos[[colname]][!is.na(pos[[colname]])])
   n.neg <- length(neg[[colname]][!is.na(neg[[colname]])])
   
-  if (n.pos+n.neg != nrow(adata)) {
-    stop("problem calculating pos and neg vals. Numbers don't add up to nrows(adata)")
+  if (n.pos+n.neg != nrow(p.anom)) {
+    stop("problem calculating pos and neg vals. Numbers don't add up to nrows(p.anom)")
   }#end if
   
   #Calc 3-year moving average to plot over bars - consider using lag tools in zoo
   run.avg <- c(NA, NA, NA) #to fill in the first three years - easier plotting
   lag <- 3
   
-  for (j in c((lag+1):nrow(adata))) {
+  for (j in c((lag+1):nrow(p.anom))) {
     run.avg[j] <- mean(p.anom[[colname]][c((j-lag):(j-1))])
     #run.avg <- append(run.avg, avg)
   }
@@ -118,12 +118,12 @@ plotAnom <- function(p.anom, colname) {
                        cex.lab=0.80, cex.axis=0.80, cex.main=0.90)
   bp2 <- barplot(neg[[colname]], col="blue", add=TRUE, width=2, border=NA, yaxt="n")    
   ab <- abline(0, 0)
-  avg <- lines(bp, run.avg, col="forestgreen", lwd=1.5)
+  avg <- lines(bp1, run.avg, col="forestgreen", lwd=1.5)
   
   #Labels every 10 years
   lab <- seq(1895, 2013, 1)%%20==0
   label <- adata$Year[lab]
-  at <- bp[lab]
+  at <- bp1[lab]
   ax <- axis(1, at=at, labels=label, cex.axis=0.80)
   
   #Legend

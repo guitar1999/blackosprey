@@ -15,7 +15,7 @@ CREATE TABLE avaricosa.avaricosa_polygon (
     comments1 TEXT,
     comments2 TEXT
 );
-SELECT AddGeometryColumn('avaricosa', 'avaricosa_polygon', 'geom', 4326, 'MULTIPOLYGON', 2);
+SELECT AddGeometryColumn('avaricosa', 'avaricosa_polygon', 'geom', 96703, 'MULTIPOLYGON', 2);
 COMMIT;
 BEGIN;
 GRANT ALL ON avaricosa.avaricosa_polygon TO blackosprey;

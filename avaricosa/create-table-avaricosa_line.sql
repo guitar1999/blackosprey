@@ -15,7 +15,7 @@ CREATE TABLE avaricosa.avaricosa_line (
     comments1 TEXT,
     comments2 TEXT
 );
-SELECT AddGeometryColumn('avaricosa', 'avaricosa_line', 'geom', 4326, 'MULTILINESTRING', 2);
+SELECT AddGeometryColumn('avaricosa', 'avaricosa_line', 'geom', 96703, 'MULTILINESTRING', 2);
 COMMIT;
 BEGIN;
 GRANT ALL ON avaricosa.avaricosa_line TO blackosprey;

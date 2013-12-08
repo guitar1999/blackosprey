@@ -3,7 +3,7 @@ CREATE TABLE avaricosa.avaricosa_line (
     ap_id SERIAL NOT NULL PRIMARY KEY,
     state TEXT NOT NULL,
     orig_file TEXT,
-    id INTEGER,
+    id TEXT,
     huc_8_num INTEGER,
     huc_8_name TEXT,
     first_obs TEXT,

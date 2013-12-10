@@ -17,8 +17,8 @@ cursor.execute(sql)
 hucs = [this[0] for this in cursor.fetchall()]
 
 for huc in hucs:
-    surl = """http://waterservices.usgs.gov/nwis/site/?format=rdb&huc=%s""" % (huc)
-    os.system("""wget %s -O %ssites_in_huc_%s.csv""" % (durl.replace('&','\&'), outdir, huc))
+    surl = """http://waterservices.usgs.gov/nwis/site/?format=rdb&huc=0%s""" % (huc)
+    os.system("""wget %s -O %ssites_in_huc_%s.csv""" % (surl.replace('&','\&'), outdir, huc))
     
 cursor.close()
 db.close()

@@ -3,6 +3,8 @@
 import psycopg2, sys
 
 infile = sys.argv[1]
+print infile
+huc = infile.split('_')[1]
 
 db = psycopg2.connect(host='localhost', database='blackosprey',user='jessebishop')
 cursor = db.cursor()
@@ -19,7 +21,7 @@ for line in f.readlines():
             # Figure out the columns
             headline = line
             headlinelist = headline.replace('\n','').split('\t')
-            dbcol = []
+            dbcol = ['huc_8_num']
             for h in headlinelist:
                 if h == 'agency_cd' or h == 'site_no' or h == 'datetime':
                     dbcol.append(h)
@@ -32,17 +34,18 @@ for line in f.readlines():
                     else:
                         cd = ''
                     dbcol.append("""%s_%s%s""" % (mtype, mstat, cd))
-                    print dbcol
+                    #print dbcol
         elif i == 1:
             # this is a mystery line, do nothing
             pass
         else:
             # do the database loading
             dbvalues = """','""".join(line.replace('\n','').split('\t'))
-            sql = """INSERT INTO usgs_stream_gauge_daily (%s) VALUES ('%s');""" % (','.join(dbcol), dbvalues)
+            sql = """INSERT INTO usgs_stream_gauge_daily (%s) VALUES (%s,'%s');""" % (','.join(dbcol), huc, dbvalues)
             cursor.execute(sql)
         i += 1
 
 f.close()
+db.commit()
 cursor.close()
 db.close()

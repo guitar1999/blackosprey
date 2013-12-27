@@ -1,0 +1,3 @@
+State,OrigFile,ID,WatershedID,Watershed_Name,Date_of_First_Obs,Date_of_Last_Obs,Date_of_Last_Survey,Pop_Condition,Location_Quality,Extirpated,Comments1,Comments2
+NJ,BrookFloater_lines_20130605_wgs84,EO_ID,,,,LAST_OBS_D,,BASIC_EO_R,,,FEAT_DESC,DIRECTIONS
+DE,DE_redclaycreek_EOR,Id,,,,LAST_OBS,,,,,Comments,

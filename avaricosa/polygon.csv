@@ -1,0 +1,10 @@
+State,OrigFile,ID,WatershedID,Watershed_Name,Date_of_First_Obs,Date_of_Last_Obs,Date_of_Last_Survey,Pop_Condition,Location_Quality,Extirpated,Comments1,Comments2
+CT,ct_av_wgs84,EO_ID,,,,LAST_OBS_D,,BASIC_EO_R,EST_ACC,,MGMT_COM,
+MD,MDDNR_Alasvari_ALL_2013_04_08_wgs84,EO_ID,,,FIRST_OBS_,LAST_OBS_D,SURVEY_DAT,EORANK,PRECISION,,MGMT_COM,EORANK_COM
+MA,A_varicosa_EOs_wgs84,EO_ID,,,FIRST_OBS_,LAST_OBS_Y,SURVEY_DAT,,,,MGMT_COM,GENERAL_CO
+NH,nhb_rep_wgs84_Qccomplete,EO_ID,,,FIRSTOBS,LASTOBS,SURVEYDATE,EORANK,PRECISION,,SURVEYSITE,
+NJ,BrookFloater_polys_20130605_wgs84,EO_ID,,,,LAST_OBS_D,,BASIC_EO_R,,,FEAT_DESC,DIRECTIONS
+NY,A_varicosa_NY_wgs84,EO_ID,,,FIRST_OBS,LAST_OBS,SURVEYDATE,EO_RANK,loq_qual,,OBSEODATA,GEN_DESC_1
+PA,PA_Element_Occurrences_joined,EO_ID,,,FIRST_OBSE,LAST_OBSER,,EO_RANK,loq_qual,,EO_RANK_CO,
+VT,Brook_Floater_EOs_VT_wgs84,EO_ID,,,FIRST_OBS,LAST_OBS,SURVEYDATE,EO_RANK,,,EO_DATA1,EORANKCOM1
+VA,Barry_Wicklow_20130123_wgs84,ObsID,,,,ObsDate,,,,,Comments,

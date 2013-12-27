@@ -15,7 +15,7 @@ CREATE TABLE avaricosa.avaricosa_point (
     comments1 TEXT,
     comments2 TEXT
 );
-SELECT AddGeometryColumn('avaricosa', 'avaricosa_point', 'geom', 96703, 'POINT', 2);
+SELECT AddGeometryColumn('avaricosa', 'avaricosa_point', 'geom', 4326, 'POINT', 2);
 COMMIT;
 BEGIN;
 GRANT ALL ON avaricosa.avaricosa_point TO blackosprey;

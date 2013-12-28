@@ -29,6 +29,6 @@ for i, line in enumerate(f.readlines()):
     o.write('\n')
 
 o.write('## Final updates\n')
-o.write('''psql -d blackosprey -c "UPDATE avaricosa.avaricosa_%s SET huc_8_num = nhd_hu8_watersheds.huc_8_num FROM nhd_hu8_watersheds WHERE ST_Intersects(nhd_hu8_watersheds.geom, avaricosa.avaricosa_%s.geom);\n"''' % (gtype, gtype))
+o.write('''psql -d blackosprey -c "UPDATE avaricosa.avaricosa_%s SET huc_8_num = nhd_hu8_watersheds.huc_8_num FROM nhd_hu8_watersheds WHERE ST_Intersects(nhd_hu8_watersheds.geom, avaricosa.avaricosa_%s.geom);"\n''' % (gtype, gtype))
 o.write('''psql -d blackosprey -c "UPDATE avaricosa.avaricosa_%s SET huc_8_name = nhd_hu8_watersheds.hu_8_name FROM nhd_hu8_watersheds WHERE ST_Intersects(nhd_hu8_watersheds.geom, avaricosa.avaricosa_%s.geom);"\n''' % (gtype, gtype))
 o.close()

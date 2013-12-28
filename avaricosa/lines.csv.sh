@@ -12,5 +12,5 @@ psql -d blackosprey -c "INSERT INTO avaricosa.avaricosa_line (orig_file,last_obs
 psql -d blackosprey -c "DROP TABLE avaricosa.temp_DE;"
 
 ## Final updates
-psql -d blackosprey -c "UPDATE avaricosa.avaricosa_line SET huc_8_num = nhd_hu8_watersheds.huc_8_num FROM nhd_hu8_watersheds WHERE ST_Intersects(nhd_hu8_watersheds.geom, avaricosa.avaricosa_line.geom);
-"psql -d blackosprey -c "UPDATE avaricosa.avaricosa_line SET huc_8_name = nhd_hu8_watersheds.hu_8_name FROM nhd_hu8_watersheds WHERE ST_Intersects(nhd_hu8_watersheds.geom, avaricosa.avaricosa_line.geom);"
+psql -d blackosprey -c "UPDATE avaricosa.avaricosa_line SET huc_8_num = nhd_hu8_watersheds.huc_8_num FROM nhd_hu8_watersheds WHERE ST_Intersects(nhd_hu8_watersheds.geom, avaricosa.avaricosa_line.geom);"
+psql -d blackosprey -c "UPDATE avaricosa.avaricosa_line SET huc_8_name = nhd_hu8_watersheds.hu_8_name FROM nhd_hu8_watersheds WHERE ST_Intersects(nhd_hu8_watersheds.geom, avaricosa.avaricosa_line.geom);"

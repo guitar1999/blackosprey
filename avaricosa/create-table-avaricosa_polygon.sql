@@ -13,7 +13,8 @@ CREATE TABLE avaricosa.avaricosa_polygon (
     location_quality TEXT,
     extirpated TEXT,
     comments1 TEXT,
-    comments2 TEXT
+    comments2 TEXT,
+    last_obs_year INTEGER
 );
 SELECT AddGeometryColumn('avaricosa', 'avaricosa_polygon', 'geom', 4326, 'MULTIPOLYGON', 2);
 COMMIT;

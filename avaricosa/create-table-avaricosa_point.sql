@@ -13,7 +13,8 @@ CREATE TABLE avaricosa.avaricosa_point (
     location_quality TEXT,
     extirpated TEXT,
     comments1 TEXT,
-    comments2 TEXT
+    comments2 TEXT,
+    last_obs_year INTEGER
 );
 SELECT AddGeometryColumn('avaricosa', 'avaricosa_point', 'geom', 4326, 'POINT', 2);
 COMMIT;

@@ -10,11 +10,17 @@ library(RPostgreSQL)
 # Connect to database
 con <- dbConnect(drv="PostgreSQL", host="127.0.0.1", user="jessebishop", dbname="blackosprey")
 
-query <- "SELECT avg(discharge_mean::numeric) AS avg, min(datetime) AS mdate, date_part('year', datetime) AS year, date_part('month', datetime) AS month FROM usgs_stream_gauge_daily where huc_8_num = 1080204 and site_no = 01173500 GROUP BY date_part('year', datetime), date_part('month', datetime) order by date_part('year', datetime), date_part('month', datetime); "
+query <- paste("SELECT avg(discharge_mean::numeric) AS avg, min(datetime) AS mdate, date_part('year', datetime) AS year, date_part('month', datetime) AS month FROM usgs_stream_gauge_daily where huc_8_num = ", huc, " AND site_no = '" site, "' GROUP BY date_part('year', datetime), date_part('month', datetime) order by date_part('year', datetime), date_part('month', datetime);", sep="")
 
-query <- paste("SELECT min(discharge_mean::numeric) AS min, avg(discharge_mean::numeric) AS avg, max(discharge_mean::numeric) AS max, min(datetime) AS mdate, year, season FROM usgs_stream_gauge_seasons  WHERE huc_8_num = ", huc, " AND site_no = '", site, "' GROUP BY year, season ORDER BY year, CASE WHEN season = 'winter' THEN 1 WHEN season = 'spring' THEN 2 WHEN season = 'summer' THEN 3 ELSE 4 END;", sep='')
+df.avg <- dbGetQuery(con, query)
+
+#query <- paste("SELECT min(discharge_mean::numeric) AS min, avg(discharge_mean::numeric) AS avg, max(discharge_mean::numeric) AS max, min(datetime) AS mdate, year, season FROM usgs_stream_gauge_seasons  WHERE huc_8_num = ", huc, " AND site_no = '", site, "' GROUP BY year, season ORDER BY year, CASE WHEN season = 'winter' THEN 1 WHEN season = 'spring' THEN 2 WHEN season = 'summer' THEN 3 ELSE 4 END;", sep='')
+
+query <- paste("SELECT min(discharge_mean::numeric) AS min, max(discharge_mean::numeric) AS max, min(datetime) AS mdate, date_part('year', datetime) AS year, flow FROM usgs_stream_gauge_minmax_flow WHERE huc_8_num = ", huc, " AND site_no = '", site, "' AND NOT flow = 'other' GROUP BY year, flow ORDER BY year, flow;", sep='')
 
 df <- dbGetQuery(con, query)
+df.min <- subset(df, df$flow == 'min')
+df.max <- subset(df, df$flow == 'max')
 
 setwd('/Volumes/BlackOsprey/MapBook/StreamGauge/')
 fname <- 'huc_01080204_site_01173500_manual.pdf'

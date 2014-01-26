@@ -7,6 +7,8 @@ CREATE VIEW usgs_stream_gauge_minmax_flow AS (
                 'max'
             WHEN date_part('month', datetime) IN (8,9) THEN
                 'min'
+            ELSE
+                'other'
         END AS flow
     FROM usgs_stream_gauge_daily
 );

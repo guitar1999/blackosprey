@@ -22,7 +22,7 @@ CREATE VIEW avaricosa.avaricosa_line_midpoint_view AS (
             THEN 
                 ST_GeomFromText('POINT(-74.902326810394 41.1328710507476)', 4326) --Hand calculated because of self-intersecting segments in the MULTILINESTRING
             ELSE 
-                ST_Line_Interpolate_Point(ST_LineMerge(geom, 0.5)) 
+                ST_Line_Interpolate_Point(ST_LineMerge(geom), 0.5) 
         END AS geom
     FROM
         avaricosa.avaricosa_line

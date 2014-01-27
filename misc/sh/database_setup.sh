@@ -21,3 +21,4 @@ psql -U postgres -d blackosprey -c "GRANT SELECT, INSERT, UPDATE, DELETE ON geom
 psql -U postgres -d blackosprey -c "GRANT SELECT, INSERT, UPDATE, DELETE ON raster_columns TO blackosprey;"
 psql -U postgres -d blackosprey -c "GRANT SELECT, INSERT, UPDATE, DELETE ON raster_overviews TO blackosprey;"
 
+psql -U postgres -d blackosprey -c "ALTER DATABASE blackosoprey SET search_path TO public,avaricosa,extent;"

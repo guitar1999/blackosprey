@@ -11,7 +11,11 @@ CREATE TABLE avaricosa.avaricosa_line (
     last_survey TEXT,
     pop_condition TEXT,
     location_quality TEXT,
-    extirpated TEXT,
+    update_pop_cond TEXT,
+    update_pop_cond_confidence TEXT,
+    update_pop_cond_author TEXT,
+    update_last_survey DATE,
+    update_last_obs DATE,
     comments1 TEXT,
     comments2 TEXT,
     last_obs_year INTEGER

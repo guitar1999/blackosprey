@@ -7,8 +7,11 @@ CREATE TABLE avaricosa.avaricosa_line (
     huc_8_num INTEGER,
     huc_8_name TEXT,
     first_obs TEXT,
+    first_obs_date DATE,
     last_obs TEXT,
+    last_obs_date DATE,
     last_survey TEXT,
+    last_survey_date DATE,
     pop_condition TEXT,
     location_quality TEXT,
     update_pop_cond TEXT,
@@ -18,7 +21,8 @@ CREATE TABLE avaricosa.avaricosa_line (
     update_last_obs DATE,
     comments1 TEXT,
     comments2 TEXT,
-    last_obs_year INTEGER
+    last_obs_year INTEGER,
+    last_survey_year INTEGER
 );
 SELECT AddGeometryColumn('avaricosa', 'avaricosa_line', 'geom', 4326, 'MULTILINESTRING', 2);
 COMMIT;

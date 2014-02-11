@@ -1,5 +1,5 @@
 BEGIN;
-CREATE OR REPLACE VIEW avaricosa.avaricosa_point _view AS (
+CREATE OR REPLACE VIEW avaricosa.avaricosa_point_view AS (
     SELECT 
         ap_id,
         state,
@@ -46,7 +46,7 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_point _view AS (
             THEN
                 date_part('decade', last_obs_date) * 10
             ELSE
-                date_part('decade', updat_last_obs) * 10
+                date_part('decade', update_last_obs) * 10
         END AS symbol_last_obs_decade,
         geom
     FROM

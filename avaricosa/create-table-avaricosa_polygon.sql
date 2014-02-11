@@ -20,9 +20,7 @@ CREATE TABLE avaricosa.avaricosa_polygon (
     update_last_survey DATE,
     update_last_obs DATE,
     comments1 TEXT,
-    comments2 TEXT,
-    last_obs_year INTEGER,
-    last_survey_year INTEGER
+    comments2 TEXT
 );
 SELECT AddGeometryColumn('avaricosa', 'avaricosa_polygon', 'geom', 4326, 'MULTIPOLYGON', 2);
 COMMIT;

@@ -20,9 +20,7 @@ CREATE TABLE avaricosa.avaricosa_point (
     update_last_survey DATE,
     update_last_obs DATE,
     comments1 TEXT,
-    comments2 TEXT,
-    last_obs_year INTEGER,
-    last_survey_year INTEGER
+    comments2 TEXT
 );
 SELECT AddGeometryColumn('avaricosa', 'avaricosa_point', 'geom', 4326, 'POINT', 2);
 COMMIT;

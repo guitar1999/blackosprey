@@ -1,5 +1,5 @@
 BEGIN;
-CREATE OR REPLACE VIEW avaricosa.avaricosa_line_midpoint_view AS (
+CREATE OR REPLACE VIEW avaricosa.avaricosa_line_view AS (
     SELECT 
         ap_id,
         state,
@@ -48,16 +48,8 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_line_midpoint_view AS (
             ELSE
                 date_part('decade', updat_last_obs) * 10
         END AS symbol_last_obs_decade,
-        CASE 
-            WHEN 
-                id = '13653' 
-            THEN 
-                ST_GeomFromText('POINT(-74.902326810394 41.1328710507476)', 4326) --Hand calculated because of self-intersecting segments in the MULTILINESTRING
-            ELSE 
-                ST_Line_Interpolate_Point(ST_LineMerge(geom), 0.5) 
-        END AS geom
+        geom
     FROM
         avaricosa.avaricosa_line
 );
 COMMIT;
-        

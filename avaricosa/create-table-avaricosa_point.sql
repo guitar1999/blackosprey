@@ -1,12 +1,14 @@
 BEGIN;
 CREATE TABLE avaricosa.avaricosa_point (
     ap_id SERIAL NOT NULL PRIMARY KEY,
+    town TEXT,
     state TEXT NOT NULL,
     orig_file TEXT,
     id TEXT,
     huc_8_num INTEGER,
     huc_8_name TEXT,
     waterway TEXT,
+    reachcode TEXT,
     first_obs TEXT,
     first_obs_date DATE,
     last_obs TEXT,

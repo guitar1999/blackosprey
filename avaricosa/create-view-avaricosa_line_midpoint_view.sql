@@ -1,13 +1,16 @@
 BEGIN;
+DROP VIEW IF EXISTS avaricosa.avaricosa_line_midpoint_view CASCADE;
 CREATE OR REPLACE VIEW avaricosa.avaricosa_line_midpoint_view AS (
     SELECT 
         ap_id,
+        town,
         state,
         orig_file,
         id,
         huc_8_num,
         huc_8_name,
         waterway,
+        reachcode,
         first_obs,
         date_part('decade', first_obs_date) * 10 AS first_obs_decade,
         last_obs,

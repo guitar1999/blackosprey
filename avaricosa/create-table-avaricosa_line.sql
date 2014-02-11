@@ -6,6 +6,7 @@ CREATE TABLE avaricosa.avaricosa_line (
     id TEXT,
     huc_8_num INTEGER,
     huc_8_name TEXT,
+    waterway TEXT,
     first_obs TEXT,
     first_obs_date DATE,
     last_obs TEXT,

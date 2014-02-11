@@ -7,6 +7,7 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_polygon_centroid_view AS (
         id,
         huc_8_num,
         huc_8_name,
+        waterway,
         first_obs,
         date_part('decade', first_obs_date) * 10 AS first_obs_decade,
         last_obs,

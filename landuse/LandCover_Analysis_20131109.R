@@ -1,3 +1,13 @@
+# Purpose: This script contains functions that generate plots of landcover change from the NLCD 
+#          change product (1992-2001). 
+# Author: Tina Cormier
+# Date: November 9, 2013
+# Notes: See comments for notes on needed changes.  Also need to write a wrapper instead of having that part
+#        of the script at the bottom (was done this way for testing).
+# Status: Runs, but needs some work. Mapping functions not yet implemented.
+#
+#################################################################
+
 library(raster)
 library(maptools)
 library(stringr)
@@ -134,13 +144,14 @@ mapLC <- function(extentObject, ) {
   
 }#end function
 
+#PUT THIS STUFF INTO A WRAPPER SCRIPT WHEN FINISHED TESTING.
 #user input variables
 polyfile <- "/Users/tcormier/Google Drive/wicklow/brook_floater/testing/buffer_analysis/vt_buff1000m.shp"
 rasfile <- "/Users/tcormier/Google Drive/wicklow/brook_floater/testing/area13_changeproduct5k_111907.img"
 #watersheds or subwatershed level analysis (if sub-watershed, need group designation for subtitle)
 #Enter either "watershed" or "subwatershed"
 scale <- "subwatershed"
-#if subwatershed level, enter buffer size if applicable. Otherwise, enter ""
+#if subwatershed level, enter buffer size if applicable. Otherwise, enter "". For graph labeling.
 buff <- "1 km"
 
 

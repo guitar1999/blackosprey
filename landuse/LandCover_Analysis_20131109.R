@@ -32,7 +32,8 @@ summarizeLC <- function(LCraster) {
   levels(lut$Land.Cover.Change) <- c(levels(lut$Land.Cover.Change), as.character(lut$Modified.Anderson.Level.1[1:9]))
   lut$Land.Cover.Change[1:9] <- as.character(lut$Modified.Anderson.Level.1[1:9])
   
-  freq <- as.data.frame(table(LCraster@data@values))
+  #freq <- as.data.frame(table(LCraster@data@values))
+  freq <- as.data.frame(table(getValues(LCraster)))
   names(freq)[1] <- "ID"
   freq$ID <- as.numeric(as.character(freq$ID))
   

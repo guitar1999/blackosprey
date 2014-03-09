@@ -1,3 +1,12 @@
+# Purpose: This script calls functions that generate plots showing climate trends from PRISM monthly 
+#          historical observations. Connects to psql database to get boundaries within which to 
+#          calculate trends. In this case, HUC8 watersheds within the study area.
+# Author: Tina Cormier
+# Date: October, 2013
+# Notes: See comments for notes on needed changes.  
+# Status: Runs
+#################################################################
+
 library(zoo)
 library(RPostgreSQL)
 #source("/Users/tcormier/Documents/test/climate_plotting/BF_plot_climate_trends.R")

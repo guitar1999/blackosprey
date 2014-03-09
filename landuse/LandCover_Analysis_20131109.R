@@ -125,9 +125,10 @@ hbars <- function(lcc, main.title, colors, type) {
   #plot settings
   par(mar=c(5,8,4,2))
   #xlims <- range(pretty(c(min(lcc$percent_change), max(lcc$percent_change))))
+  #these xlims work for watersheds, but will likely need to be adjusted for buffered areas.
   if (type=="chg") {
-  xlims <- range(-10, 10)
-  xlab <- "Percent Change (%)"
+    xlims <- range(-4, 4)
+    xlab <- "Percent Change (%)"
   } else if (type=="lu") {
     xlims <- range(0,100)
     xlab <- "Percent (%)"
@@ -146,21 +147,21 @@ hbars <- function(lcc, main.title, colors, type) {
 }#end function
 
 #INCOMPLETE: Landcover Mapping Function
-mapLC <- function(extentObject, ) {
-  ex <- extent(extentObject)
-  lat <- c(ex@ymin, ex@ymax)
-  lon <- c(ex@xmin, ex@ymax)
-  center <- c(mean(lat), mean(lon))
-  zoom <- 5
-  terrmap <- GetMap(center=center, zoom=zoom, maptype="terrain", destfile="/Users/tcormier/Documents/test/R-maps/test.png")
-  
-}#end function
+# mapLC <- function(extentObject, ) {
+#   ex <- extent(extentObject)
+#   lat <- c(ex@ymin, ex@ymax)
+#   lon <- c(ex@xmin, ex@ymax)
+#   center <- c(mean(lat), mean(lon))
+#   zoom <- 5
+#   terrmap <- GetMap(center=center, zoom=zoom, maptype="terrain", destfile="/Users/tcormier/Documents/test/R-maps/test.png")
+#   
+# }#end function
 
 #PUT THIS STUFF INTO A WRAPPER SCRIPT WHEN FINISHED TESTING.
 
 ####################################################
 #user input variables
-polyfile <- "/Users/tcormier/Google Drive/wicklow/brook_floater/testing/buffer_analysis/vt_buff1000m.shp"
+#polyfile <- "/Users/tcormier/Google Drive/wicklow/brook_floater/testing/buffer_analysis/vt_buff1000m.shp"
 rasfile <- "/Users/tcormier/Google Drive/wicklow/brook_floater/testing/area13_changeproduct5k_111907.img"
 outdir <- "/Volumes/BlackOsprey/MapBook/LandUseChg/"
 #watersheds or subwatershed level analysis (if sub-watershed, need group designation for subtitle)
@@ -193,7 +194,7 @@ ras <- raster(rasfile)
 # #specify watersheds that contain avaricosa
 # polys <- polys[is.na(polys$contains_avaricosa),]
 
-i=20
+#i=20
 #poly$ID <-as.character(poly$ID)
 for (i in c(1:length(poly))) {
   print(paste("reading ", poly$hu_8_name[i], " watershed polygon. . .", sep=""))
@@ -262,11 +263,11 @@ for (i in c(1:length(poly))) {
   hbarplot <- hbars(lcc, poly.main.chg, colors, type="chg")
   dev.off()
   
-  pdf(file=outfile.lu, 7,4.5)
-  hbarplot.lu <- hbars(lc, poly.main.lu, colors, type="lu")
-  #add area (ha) to end of bars.
-  #text(lcc$percent_change, hbarplot, paste(round(LCsumm$diff_area), " ha", sep=""), pos=4, cex=0.75)
-  dev.off()
+#   pdf(file=outfile.lu, 7,4.5)
+#   hbarplot.lu <- hbars(lc, poly.main.lu, colors, type="lu")
+#   #add area (ha) to end of bars.
+#   #text(lcc$percent_change, hbarplot, paste(round(LCsumm$diff_area), " ha", sep=""), pos=4, cex=0.75)
+#   dev.off()
 
 }#end watershed for
 

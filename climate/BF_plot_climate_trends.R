@@ -1,3 +1,11 @@
+# Purpose: This script contains functions that generate plots showing climate trends from PRISM monthly 
+#          historical observations. 
+# Author: Tina Cormier
+# Date: October, 2013
+# Notes: See comments for notes on needed changes.  
+# Status: Runs, with the exception of the mapping functions, which are still in progress.
+#
+#################################################################
 library(zoo)
 
 #Function to plot watershed-level PRISM-based climate trends

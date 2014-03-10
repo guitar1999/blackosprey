@@ -26,14 +26,14 @@ WITH index_query AS (
 UPDATE 
     avaricosa_point
 SET 
-    avaricosa_point.waterbody = 
+    waterway = 
         CASE 
             WHEN 
-                avaricosa_point.waterbody IS NULL THEN closest_streams.gnis_name 
+                avaricosa_point.waterway IS NULL THEN closest_streams.gnis_name 
             ELSE 
-                avaricosa_point.waterbody 
+                avaricosa_point.waterway 
         END, 
-    avaricosa_point.reachcode = 
+    reachcode = 
         CASE 
             WHEN 
                 avaricosa_point.reachcode IS NULL THEN closest_streams.reachcode 
@@ -46,11 +46,11 @@ WHERE
     closest_streams.ap_id=avaricosa_point.ap_id AND 
     avaricosa_point.state = 'nh' AND 
     (
-        avaricosa_point.waterbody IS NULL OR 
+        avaricosa_point.waterway IS NULL OR 
         avaricosa_point.reachcode IS NULL
     ) 
 RETURNING 
-    avaricosa_point.waterbody, 
+    avaricosa_point.waterway, 
     avaricosa_point.reachcode, 
     avaricosa_point.ap_id, 
     avaricosa_point.state;

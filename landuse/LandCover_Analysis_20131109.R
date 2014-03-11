@@ -35,6 +35,7 @@ ras <- raster(rasfile)
 #i=20
 #poly$ID <-as.character(poly$ID)
 for (i in c(1:length(poly))) {
+  print(paste(i, " of ", length(poly), sep=""))
   print(paste("reading ", poly$hu_8_name[i], " watershed polygon. . .", sep=""))
   poly.sub <- poly[i,]
   
@@ -72,14 +73,14 @@ for (i in c(1:length(poly))) {
   colors <- as.vector(ras.mask@legend@colortable)[2:8]
   
   #get total watershed/buffer area:
-  ha <- paste("total area: ", prettyNum(sum(round(LCsumm$area92)), big.mark=",", scientific=F), " ha", sep="")
+  ha <- paste("Total Area: ", prettyNum(sum(round(LCsumm$area92)), big.mark=",", scientific=F), " ha", sep="")
   
   #titles and such
   #poly.main <- paste("Landuse Change 1992 - 2001", "\n",poly.sub$HUC_8_NAME, ", ID: ", poly.sub$HUC_8_NUM, sep="")
   if (scale == "subwatershed") {
     #This will have to be coded later - once we figure out the final buffer layer and name the groupings
     poly.subtitle.chg <- paste(buff, " buffer")
-    #fix titles for sub-watersheds
+    #FIX TITLES FOR SUB-WATERSHEDS ONCE METHOD IS SORTED OUT
     poly.main.chg <- paste("Land Use Change 1992 - 2001", "\n", " Good Viability Population",
                            "\n", poly.subtitle.chg, "\n", ha,sep="")
     poly.subtitle.lu <- paste(buff, " buffer")
@@ -87,9 +88,9 @@ for (i in c(1:length(poly))) {
                           "\n", poly.subtitle.chg, "\n", ha,sep="")
   } else if (scale == "watershed") {
     poly.subtitle.chg <- ""
-    poly.main.chg <- paste("Land Use Change 1992 - 2001", "\n",poly.sub$hu_8_name, " watershed, HUC8 ID: ", 
+    poly.main.chg <- paste("Land Use Change 1992 - 2001", "\n",poly.sub$hu_8_name, " Watershed, HUC8 ID: ", 
                            poly.sub$huc_8_num, "\n", ha, sep="")
-    poly.main.lu <- paste("Land Use 2001", "\n",poly.sub$hu_8_name, " watershed, HUC8 ID: ", 
+    poly.main.lu <- paste("Land Use 2001", "\n",poly.sub$hu_8_name, " Watershed, HUC8 ID: ", 
                           poly.sub$huc_8_num, "\n", ha, sep="")
   } else {
     print(paste("ERROR: scale must be either 'subwatershed' or 'watershed.' You entered: ", scale, sep=""))

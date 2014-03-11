@@ -1,0 +1,3 @@
+State,OrigFile,ID,WatershedID,Watershed_Name,Date_of_First_Obs,Date_of_Last_Obs,Date_of_Last_Survey,Pop_Condition,Location_Quality,Extirpated,Comments1,Comments2
+NC,Avaricosa_NC_wgs84,STATION,,,,,,,,,COMMENTS,HABITAT
+SC,Avaricosa_SC_wgs84,STATION,,,,,,,,,COMMENTS,HABITAT

@@ -2,6 +2,7 @@ BEGIN;
 DROP VIEW IF EXISTS avaricosa.avaricosa_all_as_point_view CASCADE;
 CREATE OR REPLACE VIEW avaricosa.avaricosa_all_as_point_view AS (
     SELECT
+        ap_id || id || huc_8_num AS primary_key,
         ap_id,
         town,
         state,
@@ -31,10 +32,12 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_all_as_point_view AS (
         symbol_pop_cond,
         symbol_last_survey_decade,
         symbol_last_obs_decade,
-        geom
+        geom, 
+        'point'::text AS source_geom
     FROM avaricosa.avaricosa_point_view
     UNION ALL
     SELECT 
+        ap_id || id || huc_8_num AS primary_key,
         ap_id,
         town,
         state,
@@ -64,10 +67,12 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_all_as_point_view AS (
         symbol_pop_cond,
         symbol_last_survey_decade,
         symbol_last_obs_decade,
-        geom
+        geom,
+        'line'::text AS source_geom
     FROM avaricosa.avaricosa_line_midpoint_view
     UNION ALL
     SELECT 
+        ap_id || id || huc_8_num AS primary_key,
         ap_id,
         town,
         state,
@@ -97,7 +102,8 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_all_as_point_view AS (
         symbol_pop_cond,
         symbol_last_survey_decade,
         symbol_last_obs_decade,
-        geom
+        geom,
+        'polygon'::text AS source_geom
     FROM avaricosa.avaricosa_polygon_centroid_view
 );
 COMMIT;

@@ -30,7 +30,8 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_all_as_point_no_geom_view AS (
         comments2,
         symbol_pop_cond,
         symbol_last_survey_decade,
-        symbol_last_obs_decade
+        symbol_last_obs_decade,
+        source_geom
     FROM avaricosa.avaricosa_all_as_point_view
 );
 COMMIT;

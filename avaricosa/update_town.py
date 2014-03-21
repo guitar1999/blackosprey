@@ -12,4 +12,4 @@ for g in ['point', 'line', 'polygon']:
     #cursor.execute(sql)
     #db.commit()
     print(sql)
-    
+ 

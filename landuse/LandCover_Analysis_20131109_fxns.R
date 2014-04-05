@@ -2,8 +2,8 @@
 #          change product (1992-2001). 
 # Author: Tina Cormier
 # Date: November 9, 2013
-# Notes: See comments for notes on needed changes.  Also need to write a wrapper instead of having that part
-#        of the script at the bottom (was done this way for testing).
+# Notes: See comments for notes on needed changes.
+#
 # Status: Runs, but needs some work. Mapping functions not yet implemented.
 #
 #################################################################
@@ -95,9 +95,10 @@ summarizeLC <- function(LCraster) {
   return(chg.tbl)
 }#end function
 
-#horizontal barplot function where chg.df is a 2-column data frame containing
-#land cover class and percent change - function assumes column names are "class"
+#horizontal barplot function where lcc is a 2-column data frame containing
+#land cover class and percent change or percent area - function assumes column names are "class"
 #and "percent".
+#colors arg should be a vector of colors that will symbolize your classes.
 #type arg can be "chg" or "lu"
 hbars <- function(lcc, main.title, colors, type) {
   #function for adding transparency to plots (from: http://stackoverflow.com/questions/12995683/any-way-to-make-plot-points-in-scatterplot-more-transparent-in-r)

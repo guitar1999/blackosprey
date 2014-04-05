@@ -23,13 +23,14 @@ library(sp)
 imp.file <- "/Users/tcormier/GoogleDrive/wicklow/brook_floater/testing/NLCD2001_impervious_v2_5-4-11/nlcd2001_impervious_v2_5-4-11.img"
 
 #path/name of forest cover layer
+#forest.file <- "/Users/tcormier/GoogleDrive/wicklow/brook_floater/testing/hansen_forest_cover/Hansen_GFC2013_treecover2000_50N_080W_albers.tif"
 forest.file <- "/Users/tcormier/GoogleDrive/wicklow/brook_floater/testing/forest_cover_glcf/NH/NH_GLCF_Landsat_forestcover_2000.tif"
 
 #EO files - points and buffered to 500m, 1000m, and 3000m
 eo.file <- "/Users/tcormier/GoogleDrive/wicklow/brook_floater/testing/avaricosa_eo_all_20130325/Avaricosa_EOs_with_geom_albers.shp"
-eo500.file <- "/Users/tcormier/GoogleDrive/wicklow/brook_floater/testing/avaricosa_eo_all_20130325/Avaricosa_EOs_with_geom_albers_buff500m.shp"
-eo1000.file <- "/Users/tcormier/GoogleDrive/wicklow/brook_floater/testing/avaricosa_eo_all_20130325/Avaricosa_EOs_with_geom_albers_buff1000m.shp"
-eo3000.file <- "/Users/tcormier/GoogleDrive/wicklow/brook_floater/testing/avaricosa_eo_all_20130325/Avaricosa_EOs_with_geom_albers_buff3000m.shp"
+# eo500.file <- "/Users/tcormier/GoogleDrive/wicklow/brook_floater/testing/avaricosa_eo_all_20130325/Avaricosa_EOs_with_geom_albers_buff500m.shp"
+# eo1000.file <- "/Users/tcormier/GoogleDrive/wicklow/brook_floater/testing/avaricosa_eo_all_20130325/Avaricosa_EOs_with_geom_albers_buff1000m.shp"
+# eo3000.file <- "/Users/tcormier/GoogleDrive/wicklow/brook_floater/testing/avaricosa_eo_all_20130325/Avaricosa_EOs_with_geom_albers_buff3000m.shp"
 
 #set connection to db - Only works as Jesse's user - not mine yet. Some config on db side needed.
 #dsn <- ("PG:dbname='blackosprey' host='192.168.1.100' user='jessebishop'")
@@ -42,7 +43,7 @@ poly.tbl <- "/Users/tcormier/GoogleDrive/wicklow/brook_floater/testing/NewHampsh
 ######################### FUNCTIONS ########################################
 
 #Function to plot impervious surfaces vs. forested area, symbolized by EO_Rank
-summImp <- function(imp.ras, for.ras, poly, eo, eobuff) {
+summImp <- function(imp.ras, for.ras, poly, eo) {
   #plot - need to do some data exploration before I can decide
   #how the plot should look.
   
@@ -51,20 +52,35 @@ summImp <- function(imp.ras, for.ras, poly, eo, eobuff) {
   for.ras <- forest.mask
   poly <- poly.sub
   eo <- eo 
-  eobuff <- eo3000
-  
-  #WORKING ON THIS NEXT: BUFFER POINTS - then extract
+  #eobuff <- eo3000 
   
   #extract forest cover and impervious surface info to EO points.
-  eo.imp <- extract(imp.ras, eo3000)
-  eo.for <- extract(for.ras, eo)
-  eo.rank <- as.character(eo$UPDATE_POP)
-  
+  eo.imp <- extract(imp.ras, eo, buffer=3000, fun=mean, na.rm=T)
+  eo.for <- extract(for.ras, eo, buffer=3000, fun=mean, na.rm=T)
+  eo.rank <- as.data.frame(as.character(eo$UPDATE_POP))
+  names(eo.rank) <- "rank"
   eo.ifr <- cbind(eo.imp, eo.for, eo.rank)
+    
+  #colors - create a lookup table and apply to eo.rank variable
+  color <- c("green", "blue", "darkorange", "red", "darkorchid3", "tan","darkseagreen", "black", "gray58", "gray58" )
+  ranks <- c("A", "B", "C", "D", "E", "H", "F", "X", "U", "NR")
   
+  #for legend plotting
+  labels <- c("Excellent Viability", "Good Viability", "Fair Viability", "Poor Viability", "Verified Extant", 
+              "Historical", "Failed to Find", "Extirpated", "Unrankable", "Not Ranked")
   
+  #apply lookup table to eo.rank
+  #remove NAs first
+  eo.ifr <- na.omit(eo.ifr)
+  eo.ifr$color <- color[match(eo.ifr$rank, ranks)]
   
-  
+  #Make prettier, and color points based on rank
+  plot(eo.ifr$eo.imp, eo.ifr$eo.for, pch=16, col=eo.ifr$color, ylab="Forest Cover (%)", xlab="Impervious Surface Cover (%)", xlim=c(0,100), ylim=c(0,100), 
+       main="New Hampshire Element Occurrences: \nAdjacent Forest Cover vs. Impervious Surface Cover (3000 m buffer)")
+#   plot(eo.ifr$eo.imp, eo.ifr$eo.for, pch=as.character(eo.ifr$rank), col=eo.ifr$color, ylab="Forest Cover (%)", xlab="Impervious Surface Cover (%)", xlim=c(0,100), ylim=c(0,100), 
+#       main="New Hampshire Element Occurrences: \nAdjacent Forest Cover vs. Impervious Surface Cover (3000 m buffer)") 
+#  
+  legend("topright", legend=labels, col=colors, pch=16)
   
   #convert to vectors:  
   imp.vec <- as.vector(getValues(imp.mask))
@@ -90,9 +106,9 @@ summImp <- function(imp.ras, for.ras, poly, eo, eobuff) {
 imp <- raster(imp.file)
 forest <- raster(forest.file)
 eo <- readOGR(dirname(eo.file), unlist(strsplit(basename(eo.file), "\\."))[1])
-eo500 <- readOGR(dirname(eo500.file), unlist(strsplit(basename(eo500.file), "\\."))[1])
-eo1000 <- readOGR(dirname(eo1000.file), unlist(strsplit(basename(eo1000.file), "\\."))[1])
-eo3000 <- readOGR(dirname(eo3000.file), unlist(strsplit(basename(eo3000.file), "\\."))[1])
+# eo500 <- readOGR(dirname(eo500.file), unlist(strsplit(basename(eo500.file), "\\."))[1])
+# eo1000 <- readOGR(dirname(eo1000.file), unlist(strsplit(basename(eo1000.file), "\\."))[1])
+# eo3000 <- readOGR(dirname(eo3000.file), unlist(strsplit(basename(eo3000.file), "\\."))[1])
 
 #polygon file of the boundaries within which to summarize impervious surfaces. For now, states.
 #poly <- readOGR(dsn, poly.tbl)
@@ -125,6 +141,14 @@ for (i in c(1:length(poly))){
   
   for.cropname <- paste(dirname(forest.file), "/", unlist(strsplit(basename(forest.file), "\\."))[1], "_cropNH.tif", sep="")
   for.snapname <- paste(dirname(forest.file), "/", unlist(strsplit(basename(forest.file), "\\."))[1], "_SnapToImp_NH.tif", sep="")
+  
+  #THIS IS KEY - if for.cropname and for.snapname files exist, delete them:
+  if (file.exists(for.cropname)) {
+    file.remove(for.cropname)
+  }#end file remove if
+  if (file.exists(for.snapname)) {
+    file.remove(for.snapname)
+  }#end file remove if
   #once I figure out how to extract state abbreviation, imp.name will be this:
   #imp.name <- paste(dirname(forest.file), unlist(strsplit(forest.file, "\\."))[1], "_SnapToImp_", abbr, ".tif", sep="")
   print(date())
@@ -136,7 +160,7 @@ for (i in c(1:length(poly))){
   #Here's where we paste in the forest cover grid to the imp surface grid=snapping
   #use Nearest bc these should be the same resolution/projection. Just need slight alignment,
   #so I don't want to start averaging with bilinear.
-  system(paste("/Library/Frameworks/GDAL.framework/Versions/Current/Programs/gdalwarp", for.cropname, for.snapname, "-r near -overwrite", sep=" "))
+  system(paste("/Library/Frameworks/GDAL.framework/Versions/Current/Programs/gdalwarp", for.cropname, for.snapname, "-r near -multi", sep=" "))
   
   #now read snapped forest layer back in
   for.cropsnap <- raster(for.snapname)
@@ -146,11 +170,18 @@ for (i in c(1:length(poly))){
   print("masking impervious and forest cover layers . . .")
   imp.mask <- raster::mask(imp.crop, poly.sub)
   forest.mask <- raster::mask(for.cropsnap, poly.sub)
-
   
-  #remove values >100 in both datasets - clouds, water, nodata?
+  #Set values >100 to NA in both datasets - clouds, water, nodata?  See metadata from glcf data.
+  #for some reason, this break imp.mask
+  #for testing - keep this variable so we don't have to redo the masking (time consuming):
+#   imp.mask2 <- imp.mask
+#   forest.mask2 <- forest.mask
+  imp.mask <- imp.mask2
+  forest.mask <- forest.mask2
   
-
+  imp.mask[forest.mask > 100 | imp.mask > 100 | is.na(forest.mask)] <- NA
+  forest.mask[forest.mask > 100 | imp.mask > 100 | is.na(imp.mask)] <- NA
+  
   hucSum <- summImp(imp.ras, poly[i,])
   
   

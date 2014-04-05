@@ -1,3 +1,12 @@
+# Purpose: This script calls functions that generate plots of landcover change from the NLCD 
+#          change product (1992-2001). 
+# Author: Tina Cormier
+# Date: November 9, 2013
+# Notes: See comments for notes on needed changes. Requires LandCover_Anaysis_20131109_fxns.R 
+# Status: Runs, but needs some work. Mapping functions not yet implemented.
+#
+#################################################################
+
 library(maptools)
 library(stringr)
 library(RgoogleMaps)

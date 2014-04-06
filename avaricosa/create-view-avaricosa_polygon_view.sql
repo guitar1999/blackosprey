@@ -32,9 +32,21 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_polygon_view AS (
             WHEN
                 update_pop_cond IS NULL
             THEN
-                pop_condition
+                CASE
+                    WHEN pop_condition IN ('A', 'B', 'C', 'D', 'AB', 'AC', 'AD', 'BC', 'BD', 'CD', 'E', 'H', 'X', 'F', 'U', 'NR')
+                    THEN
+                        pop_condition
+                    ELSE
+                        'NR'::text
+                END
             ELSE
-                update_pop_cond
+                CASE
+                    WHEN update_pop_cond IN ('A', 'B', 'C', 'D', 'AB', 'AC', 'AD', 'BC', 'BD', 'CD', 'E', 'H', 'X', 'F', 'U', 'NR')
+                    THEN
+                        update_pop_cond
+                    ELSE
+                        'NR'::text
+                END
         END AS symbol_pop_cond,
         CASE
             WHEN

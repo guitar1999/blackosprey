@@ -2,173 +2,50 @@ library(raster)
 library(maptools)
 library(rasterVis)
 library(RColorBrewer)
-library(sp)
+library(RPostgreSQL)
 
 ############## Importing Data #################
-#Not currently using this function, but if we do, need to write in the conversion of the temp to deg F.
-# PRISMdataextract <- function(var, AOA) {
-#   #Crops monthly data by AOA polygon shapefile. Also, divides layers by 100 to adjust to their
-#   #real units.
-#   #Define location of PRISM files here
-#   workspace <- "C:/Share/LCC-VP/US_PRISM/prism_800m_restricted/"  #hardcoded
-# 
-#     
-#   #list var files from BeginYear to EndYear **For now just listing all - will come back to this.
-#   rem.list <- vector()
-#   #remove annual grids from list for now - positions are hard coded to match our data/paths for now.
-#   for (i in c(1:length(var.list))) {
-#     if (unlist(strsplit((unlist(strsplit(var.list[i], "\\."))[1]), "_"))[7] == 14) {
-#       rem.list <- append(rem.list, var.list[i])
-#     }#end if
-#   }#end for
-#   
-#   var.list <- var.list[!(var.list %in% rem.list)]
-#    
-#   #test <- stack(var.list[1], var.list[2])
-#   #test <- crop(test, pretty.poly)
-#   t0 <- proc.time()
-#   stack.prism <- stack(var.list)
-#   crop.prism <- (crop(stack.prism, AOA))/100
-#   t0 <- proc.time()-t0
-#   return(crop.prism)
-# }#end function
-
-
-annualgrid <- function(var, AOA) {
-  #var is text - either "ppt", "tmax", "tmean", or "tmin".  AOA is a polygon shapefile representing the area of analysis.
-  #Crops annual data (the .14 rasters provided with PRISM data) by AOA polygon shapefile
-  #Define location of PRISM files here
-  workspace <- "C:/Share/LCC-VP/US_PRISM/prism_800m_restricted/"
+#annualgrid function accepts a directory of monthly PRISM tifs, calculates annual means from them, and writes it to a file.
+annualgrid <- function(var, workspace, outdir) {
+  #var is text - either "ppt", "tmax", "tmean", or "tmin". workspace is directory to find images.  
+  #outdir is directory to which annual grids will be written
   
-  if (var == "tmin" | var == "tmax" | var == "tmean") {
-    #list var annual files from BeginYear to EndYear **For now just listing all - will come back to this.
-    var.list <- list.files(paste(workspace, var, sep=""), pattern="*.tif", full.names=T)
-    ann.list <- vector()
-    #remove annual grids from list for now - positions are hard coded to match our data/paths for now.
-    for (i in c(1:length(var.list))) {
-      if (unlist(strsplit((unlist(strsplit(var.list[i], "\\."))[1]), "_"))[7] == 14) {
-        ann.list <- append(ann.list, var.list[i])
-      }#end if
-    }#end for
-    #stack and crop files in list and div by 100 to get proper units
-    yr.mean <- ((crop(stack(ann.list), AOA)/100)*1.8)+32
-    #yr.mean <- crop(stack(ann.list), AOA)/100
+  #calc means from monthly data.
+  #list var files from BeginYear to EndYear **For now just listing all - will come back to this.
+  var.list <- list.files(workspace, pattern="*.tif$", full.names=T)
+
+  #calc num of iterations - minus 1 because doing the first iteration outside of loop.
+  n <- length(var.list)
   
-  #if var == "ppt" There is an issue with the ppt annual grids (the _14 grids), so calc
-  #means from monthly data.
-  } else {
-    #list var files from BeginYear to EndYear **For now just listing all - will come back to this.
-    var.list <- list.files(paste(workspace, var, sep=""), pattern="*.tif", full.names=T)
-    rem.list <- vector()
-    for (i in c(1:length(var.list))) {
-      if (unlist(strsplit((unlist(strsplit(var.list[i], "\\."))[1]), "_"))[7] == 14) {
-        rem.list <- append(rem.list, var.list[i])
-      }#end if
-    }#end for
-    
-    var.list <- var.list[!(var.list %in% rem.list)]
-    #calc num of iterations - minus 1 because doing the first iteration outside of loop.
-    n <- length(var.list)
-    
-    #calc first year
+  #calc first year
+  #t0 <- proc.time()
+  outras1 <- paste(outdir, "/", unlist(strsplit(basename(var.list[1]), "\\."))[1], ".tif", sep="")
+  yr.mean <- mean(stack(var.list[1:12]))
+  writeRaster(yr.mean, outras1, overwrite=T)
+  #calc rest of the years and stack
+  #k <- 13
+  j <- 13
+  while (j < n) {
     t0 <- proc.time()
-    yr.mean <- mean((crop(stack(var.list[1:12]), AOA))/100)
-    
-    #calc rest of the years and stack
-    #k <- 13
-    j <- 13
-    while (j < n) {
-      #prints for debugging
-      print("year list:")
-      print(var.list[j:(j+11)])
-      print ("##################")
-      
-      yr.mean2 <- mean((crop(stack(var.list[j:(j+11)]), AOA))/100)
-      yr.mean <- stack(yr.mean, yr.mean2)
-      j <- j+12
-    }# end while
+    #prints for debugging
+    print("year list:")
+    print(var.list[j:(j+11)])
+    print ("##################")
+    outras <- paste(outdir, "/", unlist(strsplit(basename(var.list[j]), "\\."))[1], ".tif", sep="")
+    yr.mean <- mean(stack(var.list[j:(j+11)]))
+    writeRaster(yr.mean, outras, overwrite=T)
+    #yr.mean <- stack(yr.mean, yr.mean2)
     t0 <- proc.time()-t0
-  }#end if
+    print(t0)
+    j <- j+12
+    #garbage collection to flush memory?
+    gc()
+  }# end while
+  #t0 <- proc.time()-t0
   
-  return(yr.mean)
+  #return(yr.mean)
 }#end function
-
-#IN PROGRESS = halted bc of lcc-vp team meeting where Andy decided we'll use the
-#same scripts.
-# forecastAdjustment <- function(var, ) # PJ - commented this out
   
-  
-annualgridForecasts <- function(var, AOA) {
-  
-  # Check the projection of input shapefile and, if necessary, reproject
-  # for consistency with climate grids
-  if (as.character(CRS(projection(AOA))) == as.character(CRS(projection(refgrid)))) {
-    print("Projections match. Awesome.")
-  } else {
-    AOA <- spTransform(AOA, CRS(projection(refgrid)))
-  }
-  
-  #var is text - either "ppt", "tmax", "tmean", or "tmin".  AOA is a polygon shapefile representing the area of analysis.
-  #Crops annual data (the .14 rasters provided with PRISM data) by AOA polygon shapefile
-  #Define location of forecast files here - hardcoded
-  workspace <- "C:/Share/LCC-VP/PACE/climate_data/forecasts/trans_pj/" # PJ 
-  # projection WGS84
-  # need to calculate TMEAN
-  
-  if (var == "tmin" | var == "tmax" | var == "tmean") {
-    #list var annual files from BeginYear to EndYear **For now just listing all - will come back to this.
-    #PJ - "*.tif" pattern picks up .xml files too...
-    var.list <- list.files(paste(workspace, var, sep=""), pattern="*.tif", full.names=T)
-    ann.list <- vector()
-    #remove annual grids from list for now - positions are hard coded to match our data/paths for now.
-    for (i in c(1:length(var.list))) {
-      if (unlist(strsplit((unlist(strsplit(var.list[i], "\\."))[1]), "_"))[7] == 14) {
-        ann.list <- append(ann.list, var.list[i])
-      }#end if
-    }#end for
-    #stack and crop files in list and div by 100 to get proper units
-    yr.mean <- ((crop(stack(ann.list), AOA)/100)*1.8)+32
-    #yr.mean <- crop(stack(ann.list), AOA)/100
-    
-    #if var == "ppt" There is an issue with the ppt annual grids (the _14 grids), so calc
-    #means from monthly data.
-  } else {
-    #list var files from BeginYear to EndYear **For now just listing all - will come back to this.
-    var.list <- list.files(paste(workspace, var, sep=""), pattern="*.tif", full.names=T)
-    rem.list <- vector()
-    for (i in c(1:length(var.list))) {
-      if (unlist(strsplit((unlist(strsplit(var.list[i], "\\."))[1]), "_"))[7] == 14) {
-        rem.list <- append(rem.list, var.list[i])
-      }#end if
-    }#end for
-    
-    var.list <- var.list[!(var.list %in% rem.list)]
-    #calc num of iterations - minus 1 because doing the first iteration outside of loop.
-    n <- length(var.list)
-    
-    #calc first year
-    t0 <- proc.time()
-    yr.mean <- mean((crop(stack(var.list[1:12]), AOA))/100)
-    
-    #calc rest of the years and stack
-    #k <- 13
-    j <- 13
-    while (j < n) {
-      #prints for debugging
-      print("year list:")
-      print(var.list[j:(j+11)])
-      print ("##################")
-      
-      yr.mean2 <- mean((crop(stack(var.list[j:(j+11)]), AOA))/100)
-      yr.mean <- stack(yr.mean, yr.mean2)
-      j <- j+12
-    }# end while
-    t0 <- proc.time()-t0
-  }#end if
-  
-  return(yr.mean)
-}#end function
-
 
 ############# Analysis Functions ###############
 
@@ -242,138 +119,7 @@ calcAnomaly <- function(adata) {
 
 
 
-############# Summary Plot Functions ##############
 
-
-plotAnom <- function(adata, cvar, mws=3, b.year, e.year) {
-  anom <- calcAnomaly(adata)
-  
-  #setting up for plotting
-  vec <- as.vector(rep(0, times=length(anom)))
-  pos <- vec
-  pos[anom >= 0] <- anom[anom >= 0]
-  neg <- vec
-  neg[anom < 0] <- anom[anom < 0]
-  
-  #for checking to make sure it all adds up properly
-  n.pos <- length(pos[pos != 0])
-  n.neg <- length(neg[neg != 0])
-  
-  if (n.pos+n.neg != length(anom)) {
-    stop("problem calculating pos and neg vals. Numbers don't add up to length(anom)")
-  }#end if
-  
-  #Calc 3-year moving average to plot over bars - consider using lag tools in zoo
-  lag <- mws
-  run.avg <- as.vector(rep(NA, times=mws)) #to fill in the first mws years - easier plotting
-  
-  
-  for (j in c((lag+1):length(anom))) {
-    run.avg[j] <- mean(anom[c((j-lag):(j-1))])
-  }#end for
-  
-  
-  cgrad <- lstfit(adata, b.year, e.year)
-  years <- c(b.year: e.year)
-  adata.mean <- annMean(adata)
-  
-  #beta <- lm((adata - matrix(adata.mean, nrow=nrow(adata[[1]]), ncol=ncol(adata[[1]]))) ~ years)
-  trend <- lm((adata.mean-mean(adata.mean)) ~ years)
-  
-  #calc limits such that 0 is in the middle
-  lim <- max(abs(anom))
-  buff <- .1*lim
-  lim <- c(-lim-buff, lim+buff)
-  
-
-  # Titles
-  if (cvar == "ppt") {
-    main <- "Historical Precipitation Anomalies"
-    ylab <- paste("Precipitation Anomaly (mm)", sep="")
-    leg.text <- c(paste(mws,"-year moving window", sep=""),paste("Trend ", round(trend$coefficients[2]*10, digits=2), " (mm/decade)", sep=""))
-  } else if (cvar == "tmax") {
-    #fix this - make pretty with italics and such from WHRC script
-    main <- "Historical Maximum Temperature Anomalies"
-    ylab <- expression(paste("Temperature Anomaly ",~(degree~F), sep=""))
-    t10yr <- round(trend$coefficients[2]*10, digits=2)
-    leg.text <-c(paste(mws,"-year moving window", sep=""), as.expression(bquote(Trend ~ .(t10yr) ~ (degree~F/decade)))) 
-  } else if (cvar == "tmin") {
-    main <- "Historical Minimum Temperature Anomalies"
-    ylab <- expression(paste("Temperature Anomaly ",~(degree~F), sep=""))
-    t10yr <- round(trend$coefficients[2]*10, digits=2)
-    leg.text <-c(paste(mws,"-year moving window", sep=""), as.expression(bquote(Trend ~ .(t10yr) ~ (degree~F/decade)))) 
-  } else {
-    main <- "Historical Mean Temperature Anomalies"
-    ylab <- expression(paste("Temperature Anomaly ",~(degree~F), sep=""))
-    t10yr <- round(trend$coefficients[2]*10, digits=2)
-    leg.text <-c(paste(mws,"-year moving window", sep=""), as.expression(bquote(Trend ~ .(t10yr) ~ (degree~F/decade)))) 
-  }#end if
-  
-  #plotting - barplots - see labeling
-  #plot barplot with nothing, then set background to gray, then plot for real.
-  bp0 <- barplot(pos, ylim=lim, width=2, border=NA, xaxt="n", yaxt="n")
-  rec <- rect(par("usr")[1],par("usr")[3],par("usr")[2],par("usr")[4],col = "white", 
-              border="black", lwd=1)
-  bp1 <- barplot(pos, ylim=lim, col="firebrick3", width=2, border=NA, 
-                 xaxt="n", add=TRUE, main=main, xlab="Year", ylab=ylab, 
-                 cex.lab=0.80, cex.axis=0.80, cex.main=0.90)
-  bp2 <- barplot(neg, col="blue", add=TRUE, width=2, border=NA, yaxt="n")    
-  ab <- abline(0, 0)
-  avg <- lines(bp1, run.avg, col="forestgreen", lwd=1.5)
-  tline <- lines(bp1, (years*trend$coefficients[[2]]+trend$coefficients[[1]]), col="gray33", lwd=2, lty=2)
-  
-  
-  #Labels every 20 years
-  lab <- seq(b.year, e.year, 1)%%20==0
-  label <- years[lab]
-  at <- bp1[lab]
-  ax <- axis(1, at=at, labels=label, cex.axis=0.80)
-  
-  #Legend  
-  leg <- legend("bottomright", leg.text, lwd=c(1,1.5), lty=c(1, 2),col=c("forestgreen", "gray33"), bty="n", cex=0.8)
-  
-  
-
-}#end function
-
-###STARTED THIS 10/4/2013
-plotAnomForecasts <- function(adata, cvar, b.year, e.year) {
-  anom <- calcAnomaly(adata)
-  
-  
-  #############
-  plot_poly(tYrs[101:200], t50, t25, t75, clr="low")
-  
-  #from John's script - for reference
-  plot_axes <- function(xval=1:10, yval=1:10, xlow, xhigh, ylow, yhigh, yLab="Degree F", xLab="Year"){
-    plot(xval, yval, xlim=c(xlow, xhigh), ylim=c(ylow, yhigh), xlab=xLab,
-         ylab = yLab, type = "n", col="black")}
-  
-  plot_obs <- function(x, y, clr="black"){
-    lines(x,y,clr, type="l",  lwd=3)}
-  
-  # takes vectors with 1) years  2) mean  3) upper poly  4) lower poly  5) color
-  # set colors - hist_sim, low, med, high
-  
-  plot_poly<- function(xVals, midVals, lowVals, highVals, clr="hist_sim"){
-    # add check that lengths are equal; maybe deal with missing values
-    if(clr=="hist_sim")clrs <- c("palegreen", "darkgreen")
-    if(clr=="low")clrs <- c("lightblue1", "royalblue")
-    if(clr=="med")clrs <- c("lightpink", "firebrick1")
-    if(clr=="high")clrs <- c("papayawhip", "darkviolet")
-    
-    polypts <- data.frame(xVals, lowVals)
-    
-    ptop <- data.frame(xVals, highVals)
-    pbot <- data.frame(rev(xVals), rev(lowVals))
-    names(ptop) <- c("x", "y")
-    names(pbot) <- c("x", "y")
-    polypts <- rbind(ptop, pbot)
-    
-    polygon(polypts$x, polypts$y, col=clrs[1], border=NA)
-    lines(xVals, midVals, col= clrs[2], lwd=5)}  # clr[2])}
-  
-}#end function
 ############# Map Building Functions ##############
 rasExtract <- function(rasPath, AOA) {
   #RasPath <- "C:/Share/LCC-VP/RangeWide/ned/clipped/GRSM_pace_ned.tif"
@@ -392,10 +138,9 @@ rasExtract <- function(rasPath, AOA) {
 } #end function
 
 
-
-
-plotPRISMgrad <- function(trend.ras, PACE, park, hsPath, cvar, c.points=NULL){
-
+#creates map of climate gradient
+plotPRISMgrad <- function(trend.ras, studyareaPoly, hsPath, cvar, c.points=NULL){
+  #don't have a hillshade currently
   #first crop, then plot hillshade
   hs <- rasExtract(hsPath, PACE)
   

@@ -5,7 +5,12 @@ library(RColorBrewer)
 library(RPostgreSQL)
 library(rgdal)
 
-source("/Users/tinacormier/Documents/scripts/git_repos/blackosprey/climate/PRISM_hx_analysis.R")
+#From mini
+#source("/Users/tinacormier/Documents/scripts/git_repos/blackosprey/climate/PRISM_hx_analysis.R")
+#wd <- "/Volumes/BlackOsprey/GIS_Data/PRISM/4km/monthly/"
+
+#From laptop
+source("/Users/tcormier/Documents/scripts/git_repos/blackosprey/climate/PRISM_hx_analysis.R")
 wd <- "/Volumes/BlackOsprey/GIS_Data/PRISM/4km/monthly/"
 setwd(wd)
 #####################################
@@ -29,12 +34,18 @@ e.year <- 2012
 #####################################
 #Connect to blackosprey db
 # Connect to database
-dsn <- ("PG:dbname='blackosprey' host='127.0.0.1' user='jessebishop'")
+#dsn <- ("PG:dbname='blackosprey' host='127.0.0.1' user='jessebishop'")
 #From other computer than mini
-#dsn <- ("PG:dbname='blackosprey' host='192.168.1.100' user='tinacormier'")
+dsn <- ("PG:dbname='blackosprey' host='192.168.1.100' user='tinacormier'")
 
 #see everything that's available
-#ogrListLayers(dsn) 
+ogrListLayers(dsn) 
+
+#other way of connecting to db, but doesn't recognize geom field (GRRR)
+# con <- dbConnect(drv="PostgreSQL", host="192.168.1.100", user="jessebishop", dbname="blackosprey")
+# query <- "select * from avaricosa.avaricosa_all_as_point_no_geom_view limit 1;"
+# a <- dbGetQuery(con, query)
+# str(a)
 
 #studyarea
 poly <- readOGR(dsn, "baselayer_project_area")

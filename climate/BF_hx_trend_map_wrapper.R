@@ -60,6 +60,10 @@ for (var in vars){
   trend.ras <- adata[[1]]
   trend.ras <- setValues(trend.ras, trends)
   
+  #now, need to divide by 100 to get at real units (either deg C or mm), but then *10 to get
+  #trend over 10 years (rather than yearly)
+  trend.ras.adj <- trend.ras/100*10
+  
   #make a nice map :)
   
   

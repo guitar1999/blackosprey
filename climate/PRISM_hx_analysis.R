@@ -1,8 +1,9 @@
-library(raster)
-library(maptools)
-library(rasterVis)
-library(RColorBrewer)
-library(RPostgreSQL)
+# library(raster)
+# library(maptools)
+# library(rasterVis)
+# library(RColorBrewer)
+# library(RPostgreSQL)
+# library(rgdal)
 
 ############## Importing Data #################
 #annualgrid function accepts a directory of monthly PRISM tifs, calculates annual means from them, and writes it to a file.

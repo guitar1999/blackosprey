@@ -4,29 +4,38 @@ library(rasterVis)
 library(RColorBrewer)
 library(RPostgreSQL)
 library(rgdal)
+library(ggmap)
 
 source("/Users/tinacormier/Documents/scripts/git_repos/blackosprey/climate/PRISM_hx_analysis.R")
 wd <- "/Volumes/BlackOsprey/GIS_Data/PRISM/4km/monthly/"
 setwd(wd)
 #####################################
 #Set variables here
-#vars <- c("tmin")
+# vars <- c("ppt", "tmax")
 vars <- c("ppt", "tmax", "tmin")
 #PACE.path <- "C:/Share/LCC-VP/ALCC_PACE_Park_boundaries/GRSM_pace_wgs72.shp"
 #park.path <- "C:/Share/LCC-VP/ALCC_PACE_Park_boundaries/GRSM_boundary_wgs72.shp"
 #hsPath <- "C:/Share/LCC-VP/RangeWide/ned/clipped/GRSM_pace_ned_hillshade_120m_wgs72.tif"
 out.mapsdir <- "/Volumes/BlackOsprey/MapBook/Climate/maps/"
+out.trendsdir <- "/Volumes/BlackOsprey/GIS_Data/PRISM/4km/trends_10yr/"
 #if applicable
 out.anngriddir <- "/Volumes/BlackOsprey/GIS_Data/PRISM/4km/annual/"
+
+#name of study area polygon in db
+sa <- "baselayer_project_area"
+
+#name of states layer in db
+states <- "states_project_area"
+
+#path to hillshade
+hsPath <- "/Volumes/BlackOsprey/GIS_Data/USGS/NED/3arcsec_processed/hillshade_study_area_3arcsec.img"
 
 b.year <- 1895
 e.year <- 2012
 #moving window size (in years) for plotting trends
 #mws <- 3
-
-#optional - climate station points to plot over maps
-#c.stations <- "C:/Share/LCC-VP/ClimateStation/GRSM_climate_db_updated_2011/GRSM_Climate_stations_Fridley_wgs72.shp"
 #####################################
+
 #Connect to blackosprey db
 # Connect to database
 dsn <- ("PG:dbname='blackosprey' host='127.0.0.1' user='jessebishop'")
@@ -37,12 +46,16 @@ dsn <- ("PG:dbname='blackosprey' host='127.0.0.1' user='jessebishop'")
 #ogrListLayers(dsn) 
 
 #studyarea
-poly <- readOGR(dsn, "baselayer_project_area")
+poly <- readOGR(dsn, sa)
 #transform poly to wgs72 to match PRISM
 poly72 <- spTransform(poly, CRS("+proj=longlat +ellps=WGS72 +towgs84=0,0,4.5,0,0,0.554,0.2263 +no_defs"))
 
+#study area states:
+st <- readOGR(dsn, states)
+st72 <- spTransform(st, CRS("+proj=longlat +ellps=WGS72 +towgs84=0,0,4.5,0,0,0.554,0.2263 +no_defs"))
+
 #calculate annual grids from monthly data - hopefully a one-time thing and can comment out ann.mean line when finished.
-vars <- "tmin"
+#vars <- "tmin"
 for (var in vars){
   #out.anngrid <- paste(out.anngriddir, var, sep="/")
   #workspace <- paste(wd, var, sep="")
@@ -62,9 +75,16 @@ for (var in vars){
   
   #now, need to divide by 100 to get at real units (either deg C or mm), but then *10 to get
   #trend over 10 years (rather than yearly)
+  out.trend <- paste(out.trendsdir, var, "_", b.year, "_", e.year, "_10yrTrends.tif", sep="")
   trend.ras.adj <- trend.ras/100*10
+  #need in wgs84 to plot with google maps. Didn't want to reproject all climate images.
+  trend.ras.wgs84 <- projectRaster(trend.ras.adj, crs=CRS("+proj=longlat +datum=WGS84"))
+  #mask trend ras with poly
+  trend.mask <- raster::mask(trend.ras.wgs84, poly)
+  writeRaster(trend.mask, filename=out.trend, overwrite=T)
   
   #make a nice map :)
+  #for now, just write out the whole file.  If we need to make a bunch of maps, can do that
   
   
   

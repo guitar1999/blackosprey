@@ -3,6 +3,7 @@ library(maptools)
 library(rasterVis)
 library(RColorBrewer)
 library(RPostgreSQL)
+library(ggmap)
 
 ############## Importing Data #################
 #annualgrid function accepts a directory of monthly PRISM tifs, calculates annual means from them, and writes it to a file.
@@ -139,10 +140,15 @@ rasExtract <- function(rasPath, AOA) {
 
 
 #creates map of climate gradient
-plotPRISMgrad <- function(trend.ras, studyareaPoly, cvar){
+plotPRISMgrad <- function(trend.ras, hsPath, poly, cvar){
   #don't have a hillshade currently
   #first crop, then plot hillshade
-  #hs <- rasExtract(hsPath, PACE)
+  hs <- raster(hsPath)
+  hs.reproj <- projectRaster(hs, crs="+proj=longlat +datum=WGS84 +no_defs", res=0.00308642, method='bilinear')
+  hs.mask <- raster::mask(hs.reproj, poly)
+  
+  #clean up
+  rm(c(hs, hs.reproj))
   
   #trying some filtering to smooth out the hs
   #hs.fil3 <- focal(hs, w=matrix(1/9,nrow=3,ncol=3))
@@ -172,7 +178,7 @@ plotPRISMgrad <- function(trend.ras, studyareaPoly, cvar){
   }#end if
   
   #for plotting pretty legend and more continuous raster plot
-  maxz <- max(abs(as.matrix(trend.ras)))
+  maxz <- max(abs(as.matrix(trend.ras)), na.rm=T)
   
   
   #Background trickery to get a plot with the correct legend
@@ -181,23 +187,48 @@ plotPRISMgrad <- function(trend.ras, studyareaPoly, cvar){
   l0.1 <- levelplot(white.ras, alpha.regions=1.0, col.regions="white", colorkey=FALSE, margin=FALSE)
   
   #Now "real" plot over l0 layers
-  l1 <- levelplot(hs.fil3, col.regions=cols.hs, maxpixels=500000, margin=FALSE, colorkey=FALSE, 
+  #l1 <- levelplot(hs.fil3, col.regions=cols.hs, maxpixels=500000, margin=FALSE, colorkey=FALSE, 
                   alpha.regions=0.6)
   l2 <- levelplot(trend.ras, alpha.regions=0.6, col.regions=pal.trend, at=seq(-maxz, maxz, length=1000), colorkey=T, margin=FALSE, 
                   maxpixels=500000)
-  l3 <- layer(sp.polygons(PACE, lwd=0.5))
-  l4 <- layer(sp.polygons(park, lwd=0.5))
-  
-  if (is.null(c.points) == FALSE) {
-    #plot station data
-    l5 <- layer(sp.points(c.points,col="black", pch=20, cex=0.3))
-    #Put all layers together
-    l0+l0.1+l1+l2+l3+l4+l5
-  } else {
-      #Put all layers together
-      l0+l0.1+l1+l2+l3+l4
-  }#end if
+  l3 <- layer(sp.polygons(studyareaPoly, lwd=0.5, col="gray14"))
+
+  #Put all layers together
+  #l0+l0.1+l1+l2+l3+l4
+  l0+l0.1+l2+l3
+
 }#end function
 
-
-
+#Trying a new mapping function using ggmap and connecting to google API - GRRR Still in process.
+mapPRISM <- function(trend.ras, poly, cvar) {
+  #using bounding box
+  #polygon extent
+  pe <- as.vector(extent(poly))
+  #**NOTE: crop = FALSE because otherwise, with stamen plots, the map is slightly shifted when I overlay data.
+  myMap <- get_map(location=c(pe[1], pe[3], pe[2], pe[4]), source="google", maptype="satellite", crop=FALSE)
+  ggmap(myMap)
+  
+  #OR
+  
+  #Using centroid of polygon area
+  centroid <- getSpPPolygonsLabptSlots(poly)
+  #**NOTE: crop = FALSE because otherwise, with stamen plots, the map is slightly shifted when I overlay data.
+  map <- get_map(location=c(centroid[1],centroid[2]), zoom = 5, maptype = 'satellite', crop=F)
+  ggmap(map)
+  #also, reproject raster to google's mercator proj
+  p.trend.ras <- projectRaster(trend.ras, crs="+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs")
+  
+  p.pix <- as(p.trend.ras, 'SpatialPixelsDataFrame')
+  #This works, but opens a webmap and coordinates are off
+  #plotGoogleMaps(p.pix, mapTypeId='SATELLITE')
+  geom_
+  l2 <- levelplot(trend.ras, alpha.regions=0.6, col.regions=pal.trend, at=seq(-maxz, maxz, length=1000), colorkey=T, margin=FALSE, 
+                  maxpixels=500000)
+  
+  ggmap(map)
+  plot(l2, add=T)
+  
+  pmap
+  
+  qmplot(centroid[1], centroid[2], data=trend.ras)
+  }#end mapPRISM function

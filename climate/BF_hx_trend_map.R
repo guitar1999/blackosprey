@@ -3,7 +3,7 @@ library(maptools)
 library(rasterVis)
 library(RColorBrewer)
 library(RPostgreSQL)
-library(ggmap)
+#library(ggmap)
 
 ############## Importing Data #################
 #annualgrid function accepts a directory of monthly PRISM tifs, calculates annual means from them, and writes it to a file.
@@ -140,23 +140,24 @@ rasExtract <- function(rasPath, AOA) {
 
 
 #creates map of climate gradient
-plotPRISMgrad <- function(trend.ras, hsPath, poly, cvar){
+plotPRISMgrad <- function(trend.ras, poly, cvar){
   #don't have a hillshade currently
   #first crop, then plot hillshade
-  hs <- raster(hsPath)
-  hs.reproj <- projectRaster(hs, crs="+proj=longlat +datum=WGS84 +no_defs", res=0.00308642, method='bilinear')
-  hs.mask <- raster::mask(hs.reproj, poly)
-  
-  #clean up
-  rm(c(hs, hs.reproj))
-  
-  #trying some filtering to smooth out the hs
-  #hs.fil3 <- focal(hs, w=matrix(1/9,nrow=3,ncol=3))
-  #hs.fil5 <- focal(hs, w=matrix(1/25,nrow=5,ncol=5))
+#   hs <- raster(hsPath)
+#   hs.reproj <- projectRaster(hs, crs="+proj=longlat +datum=WGS84 +no_defs", res=0.00308642, method='bilinear')
+#   hs.mask <- raster::mask(hs.reproj, poly)
+#   
+#   #clean up
+#   rm(hs)
+#   
+#   #trying some filtering to smooth out the hs
+#   hs.fil3 <- focal(hs.mask, w=matrix(1/9,nrow=3,ncol=3))
+#   hs.fil3_x4 <- aggregate(hs.fil3, fact=4, fun=mean, na.rm=T, expand=F)
+#   #hs.fil5 <- focal(hs, w=matrix(1/25,nrow=5,ncol=5))
   #hs.fil9 <- focal(hs, w=matrix(1/81, nrow=9, ncol=9))
   
   #set colors for hillshade
-  #cols.hs <- gray.colors(100, 0.6, 0.9)
+#   cols.hs <- gray.colors(100, 0.6, 0.9)
   
   #set colors for trend ras
   cols.trend <- rev(brewer.pal(11, "Spectral"))
@@ -179,23 +180,22 @@ plotPRISMgrad <- function(trend.ras, hsPath, poly, cvar){
   
   #for plotting pretty legend and more continuous raster plot
   maxz <- max(abs(as.matrix(trend.ras)), na.rm=T)
-  
-  
+    
   #Background trickery to get a plot with the correct legend
   l0 <- levelplot(trend.ras, alpha.regions=0.6, col.regions=pal.trend, at=seq(-maxz, maxz, length=1000), colorkey=TRUE, margin=FALSE, ylab.right=leg, 
-                  par.settings = list(layout.widths = list(axis.key.padding = 0,ylab.right = 2)))
-  l0.1 <- levelplot(white.ras, alpha.regions=1.0, col.regions="white", colorkey=FALSE, margin=FALSE)
+                  maxpixels=500000, par.settings = list(layout.widths = list(axis.key.padding = 0,ylab.right = 2)))
+  #l0.1 <- levelplot(white.ras, alpha.regions=1.0, col.regions="white", colorkey=FALSE, margin=FALSE)
   
-  #Now "real" plot over l0 layers
-  #l1 <- levelplot(hs.fil3, col.regions=cols.hs, maxpixels=500000, margin=FALSE, colorkey=FALSE, 
-                  alpha.regions=0.6)
-  l2 <- levelplot(trend.ras, alpha.regions=0.6, col.regions=pal.trend, at=seq(-maxz, maxz, length=1000), colorkey=T, margin=FALSE, 
-                  maxpixels=500000)
-  l3 <- layer(sp.polygons(studyareaPoly, lwd=0.5, col="gray14"))
+#   #Now "real" plot over l0 layers
+#   l1 <- levelplot(hs.fil3_x4, col.regions=cols.hs, maxpixels=500000, margin=FALSE, colorkey=FALSE, 
+#                   alpha.regions=0.6)
+  #l2 <- levelplot(trend.ras, alpha.regions=0.6, col.regions=pal.trend, at=seq(-maxz, maxz, length=1000), colorkey=T, margin=FALSE, 
+#                  maxpixels=500000)
+  l3 <- latticeExtra::layer(sp.polygons(poly, lwd=0.5, col="gray50"))
 
   #Put all layers together
-  #l0+l0.1+l1+l2+l3+l4
-  l0+l0.1+l2+l3
+  l0+l3
+  #l0+l0.1+l2+l3
 
 }#end function
 

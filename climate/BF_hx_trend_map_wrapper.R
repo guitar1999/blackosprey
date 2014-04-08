@@ -4,7 +4,7 @@ library(rasterVis)
 library(RColorBrewer)
 library(RPostgreSQL)
 library(rgdal)
-library(ggmap)
+#library(ggmap)
 
 source("/Users/tinacormier/Documents/scripts/git_repos/blackosprey/climate/PRISM_hx_analysis.R")
 wd <- "/Volumes/BlackOsprey/GIS_Data/PRISM/4km/monthly/"
@@ -78,17 +78,21 @@ for (var in vars){
   out.trend <- paste(out.trendsdir, var, "_", b.year, "_", e.year, "_10yrTrends.tif", sep="")
   trend.ras.adj <- trend.ras/100*10
   #need in wgs84 to plot with google maps. Didn't want to reproject all climate images.
-  trend.ras.wgs84 <- projectRaster(trend.ras.adj, crs=CRS("+proj=longlat +datum=WGS84"))
+  #trend.ras.wgs84 <- projectRaster(trend.ras.adj, crs=CRS("+proj=longlat +datum=WGS84"))
   #mask trend ras with poly
-  trend.mask <- raster::mask(trend.ras.wgs84, poly)
+  trend.mask <- raster::mask(trend.ras, poly)
   writeRaster(trend.mask, filename=out.trend, overwrite=T)
   
   #make a nice map :)
-  #for now, just write out the whole file.  If we need to make a bunch of maps, can do that
-  
-  
-  
-  
+  #Generate historical trend map
+  #outfile
+  print(paste("plotting historical prism trends - ", var, sep=""))
+  outfile <- paste(out.mapsdir, var, "_hx_decadal_trend_map_1895-2012.png", sep="")
+  png(file=outfile, 7,5, units="in", pointsize=12, res=300)
+  print(plotPRISMgrad(trend.ras.wgs84, st, var))
+  dev.off()
+
+
   
   
 }#end vars for

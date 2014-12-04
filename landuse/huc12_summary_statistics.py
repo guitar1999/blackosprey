@@ -2,18 +2,6 @@
 
 import argparse, glob, math, os, psycopg2, subprocess
 
-p = argparse.ArgumentParser(prog="huc_12_summary_statistics.py")
-p.add_argument("huc12", type=str, help="The huc_12 id to process.")
-p.add_argument("exportdir", help="The directory that holds the rasterized huc12s.")
-p.add_argument("-r", "--regen", dest="regen", required=False, action="store_true", help="Force regeneration of rasterized huc12 even if it exists.")
-args = p.parse_args()
-
-huc = args.huc12
-edir = args.exportdir
-
-# Connect to db
-db = psycopg2.connect(host='localhost', database='blackosprey',user='jessebishop')
-cursor = db.cursor()
 
 def bound_calc(func, g, l):
     '''Calculates the snapped coordinate, given the appropriate function.'''
@@ -40,7 +28,7 @@ def rasterize_huc(huc, edir, coordlist):
     query = """SELECT dumpid, ST_Transform(geom, 5070) AS geom FROM nhd_hu12_watersheds WHERE huc_12 = '{0}';""".format(huc)
     command = """/usr/local/pgsql/bin/pgsql2shp -f {0}/huc12_{1}_clip_vector.shp blackosprey "{2}" """.format(edir, huc, query)
     proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    procout = proc.communicate()
+    procout = proc.communicate() # Necessary to force wait until process completes (otherwise use subprocess.call())
     # Rasterize, remove shape, and store
     command = """/Library/Frameworks/GDAL.framework/Programs/gdal_rasterize -a dumpid -of GTiff -a_nodata 0 -te {0} {1} {2} {3} -tr 30 30 -ot Byte -co "COMPRESS=LZW" {4}/huc12_{5}_clip_vector.shp {4}/huc12_{5}_clip.tif""".format(xmin, ymin, xmax, ymax, edir, huc)
     proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -49,9 +37,36 @@ def rasterize_huc(huc, edir, coordlist):
         os.remove(f)
     return (procout, procout1)
 
+#def summarize_huc(huc, edir, coordlist, cursor, db):
+
 ########
 # MAIN #
 ########
 
+# Parse the arguments
+p = argparse.ArgumentParser(prog="huc_12_summary_statistics.py")
+p.add_argument("huc12", type=str, help="The huc_12 id to process.")
+p.add_argument("exportdir", help="The directory that holds the rasterized huc12s.")
+p.add_argument("-r", "--regen", dest="regen", required=False, action="store_true", help="Force regeneration of rasterized huc12 even if it exists.")
+args = p.parse_args()
+
+huc = args.huc12
+edir = args.exportdir
+
+print "HUC12 is {0}".format(huc)
+# Connect to db
+db = psycopg2.connect(host='localhost', database='blackosprey',user='jessebishop')
+cursor = db.cursor()
+
+# Get the snapped raster coordinates
 huc_coords = huc_bounds(huc, cursor)
-rasterize_huc(huc, edir, huc_coords)
+
+# Process the huc raster if necessary
+if not os.path.isfile("{0}/huc12_{1}_clip.tif".format(edir, huc)) or args.regen:
+    rasterize_huc(huc, edir, huc_coords)
+
+# Generate the huc12 summary statistics
+#summarize_huc(huc, edir, huc_coords, cursor, db)
+
+cursor.close()
+db.close()

@@ -37,9 +37,59 @@ def rasterize_huc(huc, edir, coordlist):
         os.remove(f)
     return (procout, procout1)
 
-#def summarize_huc(huc, edir, coordlist, cursor, db):
+def clip_data(coordlist, infile, edir, huc):
+    '''Clips a national dataset down to the huc12 extent for quick analysis'''
+    xmin, ymin, xmax, ymax = coordlist
+    outfile = """{0}/{1}_huc{2}.tif""".format(edir, os.path.splitext(os.path.basename(infile))[0], huc)
+    command = """/Library/Frameworks/GDAL.framework/Programs/gdalwarp -te {0} {1} {2} {3} -tr 30 30 {4} {5}""".format(xmin, ymin, xmax, ymax, infile, outfile)
+
+def summarize_huc(huc, edir, coordlist, cursor, db):
+    '''Generates summary statistics for a huc and puts them in the database.'''
+    # 2011
+        # Land Cover
+        # Canopy
+        # Impervious
+        # 2001 to 2011 Change Area
+        # 2001 to 2011 FromTo Change
+        # 2006 to 2011 Change Area
+        # 2006 to 2011 FromTo Change
+        # 2006 to 2011 Impervious Change
+    # 2006
+        # Land Cover
+        # Impervious
+        # 2001 to 2006 Change Area
+        # 2001 to 2006 FromTo Change
+        # 2001 to 2006 Impervious Change
+    # 2001
+        # Land Cover
+        # Canopy
+        # Impervious
+    # Retrofit
+        # 1992 to 2001 Retrofit Landcover Change
+    # 1992
+        # Land Cover
+
+    # Statistics 
+        # Land Cover
+            # Pixels / Class
+        # Impervious
+            # Mean
+            # Median
+            # Min
+            # Max 
+            # Standard Deviation
+        # Canopy Cover
+            # Mean
+            # Median
+            # Min
+            # Max 
+            # Standard Deviation
+            
+    landcover_lookup = {"Open Water" : 11, "Perennial Ice/Snow" : 12, "Developed, Open Space" : 21, "Developed, Low Intensity" : 22, "Developed, Medium Intensity" : 23, "Developed, High Intensity" : 24, "Barren Land" : 31, "Deciduous Forest" : 41, "Evergreen Forest" : 42, "Mixed Forest" : 43, "Dwarf Scrub" : 51, "Shrub/Scrub" : 52, "Grassland/Herbaceous" : 71, "Sedge/Herbaceous" : 72, "Lichens" : 73, "Moss" : 74, "Pasture/Hay" : 81, "Cultivated Crops" : 82, "Woody Wetlands" : 90, "Emergent Herbaceous Wetlands" : 95}
+
 
 def main(huc, edir, cursor, regen):
+    '''The work gets done here.'''
     print "HUC12 is {0}".format(huc)  
     # Get the snapped raster coordinates
     huc_coords = huc_bounds(huc, cursor)
@@ -78,5 +128,6 @@ if args.inlist:
 else:
     main(huc, edir, cursor, args.regen)
 
+# Close the db connection.
 cursor.close()
 db.close()

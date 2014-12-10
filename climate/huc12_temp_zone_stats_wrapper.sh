@@ -6,7 +6,7 @@ temp=$1
 
 #huclist=$(psql -d blackosprey -t -A -c "SELECT distinct(huc_8_num) FROM nhd_hu8_watersheds WHERE contains_avaricosa = 'Y';")
 huclist=$(psql -d blackosprey -t -A -c "SELECT distinct huc_12 FROM prism_unprocessed_huc12_${temp};")
-rasterlist=$(ls /Volumes/BlackOsprey/GIS_Data/PRISM/4km/monthly/temperature/${temp}/*tif)
+rasterlist=$(ls /Volumes/BlackOsprey/GIS_Data/PRISM/4km/monthly/${temp}/*tif)
 
 for huc in $huclist
 do

@@ -7,5 +7,5 @@ CREATE TABLE prism_ppt_statistics_huc12 (
 	mean numeric,
 	std_dev numeric,
 	sum numeric,
-	CONSTRAINT ppt_unique_huc12UNIQUE (huc_12, prism_year, prism_month)
+	CONSTRAINT ppt_unique_huc12 UNIQUE (huc_12, prism_year, prism_month)
 );

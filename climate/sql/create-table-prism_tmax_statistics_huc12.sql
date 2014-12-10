@@ -7,6 +7,6 @@ CREATE TABLE prism_tmax_statistics_huc12 (
 	mean numeric,
 	std_dev numeric,
 	max numeric,
-	min numeric,
-	CONSTRAINT tmax_unique_huc12 UNIQUE (huc_12, prism_year, prism_month)
+	min numeric --,
+	--CONSTRAINT tmax_unique_huc12 UNIQUE (huc_12, prism_year, prism_month)
 );

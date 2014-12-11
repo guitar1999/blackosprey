@@ -34,8 +34,6 @@ def do_work(pathimg, zone, segment_id, meas, huc):
     else:
         max = scipy.ndimage.maximum(image[:,:], labels=zone, index=segment_id)
         min = scipy.ndimage.minimum(image[:,:], labels=zone, index=segment_id)
-        names = 'segment_id,num_pixels,mean,std_dev,max,min'
-        out = np.column_stack((segment_id,num_pixels,mean,std_dev,max,min))
         sql = "INSERT INTO prism_{0}_statistics_huc12 (huc_12, prism_year, prism_month, num_pixels, mean, std_dev, max, min) VALUES ('{1}', {2}, {3}, {4}, {5}, {6}, {7}, {8});".format(meas, huc, pyear, pmonth, num_pixels, float(mean), float(std_dev), int(max), int(min))
     cursor.execute(sql)
 

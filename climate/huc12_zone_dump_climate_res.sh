@@ -16,7 +16,7 @@ do
 	ur=$(gdalinfo $raster | grep 'Upper Right' | grep  -o "\( \?-\?[0-9]\{1,3\}\.[0-9]*,[ ]*-\?[0-9]\{1,2\}\.[0-9]*\)" | tr -d '() ' | sed 's/,/ /g')
 
 	# Rasterize the shapefile
-	gdal_rasterize -at -a HUC_12 -a_nodata 0 -init 0 -te $ll $ur -tr $tr huc_${huc}_climate.shp mask_${huc}_climate.tif
+	gdal_rasterize -at -a HUC_12 -a_nodata 0 -init 0 -te $ll $ur -tr $tr -co "COMPRESS=LZW" huc_${huc}_climate.shp mask_${huc}_climate.tif
 
 	# Clean up the shapefile
 	/bin/rm huc_${huc}_climate.*

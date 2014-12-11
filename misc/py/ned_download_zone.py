@@ -1,5 +1,8 @@
 lon = [-84, -80, -75, -70, -66]
 lat = [36, 40, 45, 47.5]
+# For southern expansion
+lon = [-86, -80, -75]
+lat = [30, 33, 36]
 
 for i in range(len(lon)-1):
 	for j in range(len(lat)-1):

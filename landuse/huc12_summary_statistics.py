@@ -3,9 +3,9 @@
 import argparse, glob, math, os, psycopg2, subprocess
 
 
-def bound_calc(func, g, l):
+def bound_calc(func, g, l, res):
     '''Calculates the snapped coordinate, given the appropriate function.'''
-    return int(g + (func(abs(l - g) / 30) * 30))
+    return int(g + (func(abs(l - g) / res) * res))
 
 def huc_bounds(huc, cursor):
     '''Calculates the snapped huc bounds and returns them in a tuple.'''

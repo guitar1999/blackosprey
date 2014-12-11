@@ -30,13 +30,13 @@ def do_work(pathimg, zone, segment_id, meas, huc):
     std_dev = scipy.ndimage.standard_deviation(image[:,:], labels=zone, index=segment_id)
     if meas == 'ppt':
         sum = scipy.ndimage.sum(image[:,:], labels=zone, index=segment_id)
-        sql = "INSERT INTO prism_ppt_statistics_huc12 (huc_12, prism_year, prism_month, num_pixels, mean, std_dev, sum) VALUES ('{0}', {1}, {2}, {3}, {4}, {5}, {6});".format(huc, pyear, pmonth, num_pixels, mean, std_dev, sum)
+        sql = "INSERT INTO prism_ppt_statistics_huc12 (huc_12, prism_year, prism_month, num_pixels, mean, std_dev, sum) VALUES ('{0}', {1}, {2}, {3}, float({4}), float({5}), int({6}));".format(huc, pyear, pmonth, num_pixels, mean, std_dev, sum)
     else:
         max = scipy.ndimage.maximum(image[:,:], labels=zone, index=segment_id)
         min = scipy.ndimage.minimum(image[:,:], labels=zone, index=segment_id)
         names = 'segment_id,num_pixels,mean,std_dev,max,min'
         out = np.column_stack((segment_id,num_pixels,mean,std_dev,max,min))
-        sql = "INSERT INTO prism_{0}_statistics_huc12 (huc_12, prism_year, prism_month, num_pixels, mean, std_dev, max, min) VALUES ('{1}', {2}, {3}, {4}, {5}, {6}, {7}, {8});".format(meas, huc, pyear, pmonth, num_pixels, mean, std_dev, max, min)
+        sql = "INSERT INTO prism_{0}_statistics_huc12 (huc_12, prism_year, prism_month, num_pixels, mean, std_dev, max, min) VALUES ('{1}', {2}, {3}, {4}, float({5}), float({6}), int({7}), int({8}));".format(meas, huc, pyear, pmonth, num_pixels, mean, std_dev, max, min)
     cursor.execute(sql)
 
 

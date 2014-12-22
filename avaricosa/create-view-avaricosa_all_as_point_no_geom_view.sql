@@ -9,6 +9,8 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_all_as_point_no_geom_view AS (
         id,
         huc_8_num,
         huc_8_name,
+        huc_12,
+        huc_12_name,
         waterway,
         reachcode,
         first_obs,

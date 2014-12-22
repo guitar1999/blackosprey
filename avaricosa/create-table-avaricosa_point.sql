@@ -7,6 +7,8 @@ CREATE TABLE avaricosa.avaricosa_point (
     id TEXT,
     huc_8_num INTEGER,
     huc_8_name TEXT,
+    huc_12 TEXT,
+    huc_12_name TEXT,
     waterway TEXT,
     reachcode TEXT,
     first_obs TEXT,

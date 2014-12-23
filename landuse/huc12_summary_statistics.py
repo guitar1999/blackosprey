@@ -42,6 +42,9 @@ def clip_data(coordlist, infile, edir, huc):
     xmin, ymin, xmax, ymax = coordlist
     outfile = """{0}/{1}_huc{2}.tif""".format(edir, os.path.splitext(os.path.basename(infile))[0], huc)
     command = """/Library/Frameworks/GDAL.framework/Programs/gdalwarp -te {0} {1} {2} {3} -tr 30 30 {4} {5}""".format(xmin, ymin, xmax, ymax, infile, outfile)
+    proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    procout = proc.communicate()
+    return procout
 
 def summarize_huc(huc, edir, coordlist, cursor, db):
     '''Generates summary statistics for a huc and puts them in the database.'''
@@ -54,12 +57,12 @@ def summarize_huc(huc, edir, coordlist, cursor, db):
         # 2006 to 2011 Change Area
         # 2006 to 2011 FromTo Change
         # 2006 to 2011 Impervious Change
-    # 2006
-        # Land Cover
-        # Impervious
-        # 2001 to 2006 Change Area
-        # 2001 to 2006 FromTo Change
-        # 2001 to 2006 Impervious Change
+    # NO 2006
+        # NO Land Cover
+        # NO Impervious
+        # NO 2001 to 2006 Change Area
+        # NO 2001 to 2006 FromTo Change
+        # NO 2001 to 2006 Impervious Change
     # 2001
         # Land Cover
         # Canopy

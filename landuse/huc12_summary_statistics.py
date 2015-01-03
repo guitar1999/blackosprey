@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/Volumes/BlackOsprey/GIS_Data/bo_python/bin/python
 
 import argparse, glob, math, os, psycopg2, scipy.ndimage, subprocess
 import numpy as np
@@ -59,7 +59,7 @@ def summarize_huc(huc, edir, coordlist, cursor, db):
     files = {2011 : {"lcc" : "/Volumes/BlackOsprey/GIS_Data/NLCD/new/2011/nlcd_2001_to_2011_landcover_change_pixels/nlcd_2001_to_2011_landcover_change_pixels_2011_edition_2014_03_31/nlcd_2001_to_2011_landcover_change_pixels_2011_edition_2014_03_31_clip.tif", "lcft" : "/Volumes/BlackOsprey/GIS_Data/NLCD/new/2011/nlcd_2001_to_2011_landcover_fromto_change_index/nlcd_2001_to_2011_landcover_fromto_change_index_2011_edition_2014_04_09/nlcd_2001_to_2011_landcover_fromto_change_index_2011_edition_2014_04_09_clip.tif", "impervious" : "/Volumes/BlackOsprey/GIS_Data/NLCD/new/2011/nlcd_2011_impervious/nlcd_2011_impervious_2011_edition_2014_03_31/nlcd_2011_impervious_2011_edition_2014_03_31_clip.tif", "lc" : "/Volumes/BlackOsprey/GIS_Data/NLCD/new/2011/nlcd_2011_landcover/nlcd_2011_landcover_2011_edition_2014_03_31/nlcd_2011_landcover_2011_edition_2014_03_31_clip.tif", "cd": "/Volumes/BlackOsprey/GIS_Data/NLCD/new/2011/nlcd_2011_treecover_analytical/nlcd_2011_USFS_tree_canopy_2011_edition_2014_03_31/analytical_product/nlcd2011_usfs_treecanopy_analytical_3-31-2014_clip.tif"}, 2001 : {"lcc" : "/Volumes/BlackOsprey/GIS_Data/NLCD/new/2001/change/merged_changeproduct5k_111907_clip.tif", "cd" : "/Volumes/BlackOsprey/GIS_Data/NLCD/new/2001/canopy/nlcd2001_canopy_mosaic_1-29-08/nlcd_canopy_mosaic_1-29-08_clip.tif", "impervious" : "/Volumes/BlackOsprey/GIS_Data/NLCD/new/2001/impervious/nlcd_2001_impervious_2011_edition_2014_03_31/nlcd_2001_impervious_2011_edition_2014_03_31_clip.tif", "lc" : "/Volumes/BlackOsprey/GIS_Data/NLCD/new/2001/landcover/nlcd_2001_landcover_2011_edition_2014_03_31/nlcd_2001_landcover_2011_edition_2014_03_31_clip.tif"}, 1992 : {"lc92" : "/Volumes/BlackOsprey/GIS_Data/NLCD/new/1992/NLCD92_wall_to_wall_landcover/nlcd92mosaic_clip.tif"}}
     # Set up the db record for the huc
     try:
-        query = "INSERT INTO huc_12_summary_statistics (huc) VALUES ({0});".format(huc)
+        query = "INSERT INTO huc_12_summary_statistics (huc_12) VALUES ({0});".format(huc)
         cursor.execute(query)
     except IntegrityError, msg:
         print "HUC {0} is already in the table".format(huc)
@@ -91,7 +91,7 @@ def summarize_huc(huc, edir, coordlist, cursor, db):
                 std_dev = scipy.ndimage.standard_deviation(image, labels=hucdata, index=zoneid)
                 zmin = scipy.ndimage.minimum(image, labels=hucdata, index=zoneid)
                 zmax = scipy.ndimage.maximum(image, labels=hucdata, index=zoneid)
-                query = "UPDATE huc_12_summary_statistics SET ({0}_{1}_mean, {0}_{1}_std_dev, {0}_{1}_min, {0}_{1}_max) = ({2}, {3}, {4}, {5});".format(year, dt, mean, std_dev, zmin, zmax)
+                query = "UPDATE huc_12_summary_statistics SET (s{0}_{1}_mean, s{0}_{1}_std_dev, s{0}_{1}_min, s{0}_{1}_max) = ({2}, {3}, {4}, {5}) WHERE huc = {6};".format(year, dt, mean, std_dev, zmin, zmax, huc)
             else:
                 # For DB table, need every value that exists in any of these rasters!
                 lc_handle = gdal.Open(data_file)
@@ -102,14 +102,15 @@ def summarize_huc(huc, edir, coordlist, cursor, db):
                 pzone = pd.Series(lcdata.reshape(lcdata.shape[0] * lcdata.shape[1]))
                 num_pixels = pzone.value_counts()
                 num_pixels.name = 'num_pixels'
-                # Convert this into a query statement somehow?
+                pix_dict = num_pixels.to_dict()
                 cols = []
                 vals = []
-                for k in num_pixels.keys():
-                    cols.append("{0}_{1}_{2}".format(year, dt, k))
-                    vals.append(num_pixels[k])
-
-
+                for k,v in pix_dict.items():
+                    if k == 0:
+                        continue
+                    cols.append("s{0}_{1}_{2}".format(year, dt, k))
+                    vals.append(str(num_pixels[k]))
+                query = "UPDATE huc_12_summary_statistics SET ({0}) = {1} WHERE huc = {2};".format(','.join(cols), ','.join(vals), huc)
             cursor.execute(query)
             db.commit()
 

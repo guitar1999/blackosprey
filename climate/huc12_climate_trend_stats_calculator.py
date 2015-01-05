@@ -39,7 +39,7 @@ zone = zonehandle.ReadAsArray()
 # Get the unique ids
 segment_id = np.unique(zone)
 segment_id = segment_id[np.nonzero(segment_id)]
-
+print huc
 raster_locations = {'ppt' : '/Volumes/BlackOsprey/GIS_Data/PRISM/4km/trends_10yr/ppt_1895_2012_10yrTrends.tif', 'tmin' : '/Volumes/BlackOsprey/GIS_Data/PRISM/4km/trends_10yr/tmin_1895_2012_10yrTrends.tif', 'tmax' : '/Volumes/BlackOsprey/GIS_Data/PRISM/4km/trends_10yr/tmax_1895_2012_10yrTrends.tif'}
 for meas, fileloc in raster_locations.iteritems():
     do_work(fileloc, zone, segment_id, meas, huc)

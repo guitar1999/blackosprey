@@ -16,7 +16,7 @@ def do_work(pathimg, zone, segment_id, meas, huc):
     imagehandle = gdal.Open(pathimg)
      # Read the data
     image = imagehandle.ReadAsArray()
-    #image[image == -9999] = np.ma.masked
+    image[image == -1.70000000e+308] = np.ma.masked
     
     # Calculate the statistics
     print "Processing statistics for %s zones..." % segment_id.shape[0]

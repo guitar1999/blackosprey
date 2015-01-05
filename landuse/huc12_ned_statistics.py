@@ -51,7 +51,7 @@ def clip_data(coordlist, infile, edir, huc):
     xmin, ymin, xmax, ymax = coordlist
     outfile = """{0}/{1}_huc{2}.vrt""".format(edir, os.path.splitext(os.path.basename(infile))[0], huc)
     if not os.path.isfile(outfile):
-        command = """/Library/Frameworks/GDAL.framework/Programs/gdalwarp -of 'VRT' -te {0} {1} {2} {3} -tr 30 30 -co "COMPRESS=LZW" {4} {5}""".format(xmin, ymin, xmax, ymax, infile, outfile)
+        command = """/Library/Frameworks/GDAL.framework/Programs/gdalwarp -of "VRT" -te {0} {1} {2} {3} -tr 0.000092592592593 0.000092592592593 -co "COMPRESS=LZW" {4} {5}""".format(xmin, ymin, xmax, ymax, infile, outfile)
         proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         procout = proc.communicate()
     return outfile

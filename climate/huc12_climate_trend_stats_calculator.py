@@ -9,6 +9,7 @@ import glob, scipy.ndimage, sys, psycopg2, os
 import numpy as np
 from osgeo import gdal
 
+
 db = psycopg2.connect(host='localhost', database='blackosprey',user='jessebishop')
 cursor = db.cursor()
 

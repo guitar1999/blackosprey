@@ -7,7 +7,7 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_all_as_huc12_aggregated_view AS (
         array_to_string(array_agg(ap_id), ',') AS ap_id,
         array_to_string(array_agg(distinct state), ',') AS state,
         array_to_string(array_agg(id), ',') AS id,
-        array_to_string(array_agg(distict source_geom), ',') AS source_geom,
+        array_to_string(array_agg(distinct source_geom), ',') AS source_geom,
         h.huc_12,
         array_to_string(array_agg(distinct symbol_pop_cond), ', ') AS symbol_pop_cond,
         array_lenght(array_agg(distinct symbol_pop_cond)) > 1 AS multiple_conditions,

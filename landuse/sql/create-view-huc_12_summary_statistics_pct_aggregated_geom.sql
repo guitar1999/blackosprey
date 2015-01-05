@@ -1,6 +1,6 @@
 BEGIN;
-DROP VIEW IF EXISTS huc_12_summary_statistics_pct_aggregated CASCADE;
-CREATE OR REPLACE VIEW huc_12_summary_statistics_pct_aggregated AS (
+DROP VIEW IF EXISTS huc_12_summary_statistics_pct_aggregated_geom CASCADE;
+CREATE OR REPLACE VIEW huc_12_summary_statistics_pct_aggregated_geom AS (
     SELECT
         h.huc_12,
         num_pixels,

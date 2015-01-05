@@ -32,8 +32,8 @@ def do_work(pathimg, zone, segment_id, meas, huc):
 
 
 # Main code
-pathzone = sys.argv[1]
-huc = os.path.basename(pathzone).split('_')[1]
+huc = sys.argv[1]
+pathzone = "/Volumes/BlackOsprey/GIS_Data/NHD/hu12_rasters/mask_{0}_climate_trend.tif".format(huc)
 zonehandle = gdal.Open(pathzone)
 zone = zonehandle.ReadAsArray()
 # Get the unique ids

@@ -403,6 +403,22 @@ CREATE TABLE huc_12_summary_statistics (
     s2011_lcft_287 integer DEFAULT 0,
     s2011_lcft_288 integer DEFAULT 0,
     s2011_lcft_289 integer DEFAULT 0,
-    processed_time timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+    processed_time timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    ned_mean numeric DEFAULT NULL,
+    ned_std_dev numeric DEFAULT NULL,
+    ned_min numeric DEFAULT NULL,
+    ned_max numeric DEFAULT NULL,
+    slope_mean numeric DEFAULT NULL,
+    slope_std_dev numeric DEFAULT NULL,
+    slope_min numeric DEFAULT NULL,
+    slope_max numeric DEFAULT NULL,
+    tri_mean numeric DEFAULT NULL,
+    tri_std_dev numeric DEFAULT NULL,
+    tri_min numeric DEFAULT NULL,
+    tri_max numeric DEFAULT NULL,
+    roughness_mean numeric DEFAULT NULL,
+    roughness_std_dev numeric DEFAULT NULL,
+    roughness_min numeric DEFAULT NULL,
+    roughness_max numeric DEFAULT NULL
 );
 COMMIT;

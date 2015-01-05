@@ -10,7 +10,7 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_all_as_huc12_aggregated_view AS (
         array_to_string(array_agg(distinct source_geom), ',') AS source_geom,
         h.huc_12,
         array_to_string(array_agg(distinct symbol_pop_cond), ', ') AS symbol_pop_cond,
-        array_length(array_agg(distinct symbol_pop_cond)) > 1 AS multiple_conditions,
+        array_length(array_agg(distinct symbol_pop_cond), 1) > 1 AS multiple_conditions,
         min(h.geom)::geometry AS geom
     FROM 
         avaricosa.avaricosa_all_as_point_view a,

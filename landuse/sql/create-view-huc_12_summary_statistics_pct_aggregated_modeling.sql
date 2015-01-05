@@ -2,7 +2,7 @@ BEGIN;
 DROP VIEW IF EXISTS huc_12_summary_statistics_pct_aggregated_modeling CASCADE;
 CREATE OR REPLACE VIEW huc_12_summary_statistics_pct_aggregated_modeling AS (
     SELECT
-        huc_12,
+        h.huc_12,
         num_pixels,
         s1992_lc92_11 / num_pixels::numeric * 100 AS s1992_lc92_water_pct,
         s1992_lc92_12 / num_pixels::numeric * 100 AS s1992_lc92_snow_pct,
@@ -85,8 +85,12 @@ CREATE OR REPLACE VIEW huc_12_summary_statistics_pct_aggregated_modeling AS (
         tmax_trend_mean,
         tmax_trend_std_dev,
         tmax_trend_min,
-        tmax_trend_max
+        tmax_trend_max,
+        a.symbol_pop_cond,
+        a.multiple_conditions
     FROM
-        huc_12_summary_statistics
+        huc_12_summary_statistics h INNER JOIN 
+        avaricosa_all_as_huc12_aggregated_view a
+        ON h.huc_12=a.huc_12
 );
 COMMIT;

@@ -419,6 +419,18 @@ CREATE TABLE huc_12_summary_statistics (
     roughness_mean numeric DEFAULT NULL,
     roughness_std_dev numeric DEFAULT NULL,
     roughness_min numeric DEFAULT NULL,
-    roughness_max numeric DEFAULT NULL
+    roughness_max numeric DEFAULT NULL,
+    ppt_trend_mean numeric DEFAULT NULL,
+    ppt_trend_std_dev numeric DEFAULT NULL,
+    ppt_trend_min numeric DEFAULT NULL,
+    ppt_trend_max numeric DEFAULT NULL,
+    tmin_trend_mean numeric DEFAULT NULL,
+    tmin_trend_std_dev numeric DEFAULT NULL,
+    tmin_trend_min numeric DEFAULT NULL,
+    tmin_trend_max numeric DEFAULT NULL,
+    tmax_trend_mean numeric DEFAULT NULL,
+    tmax_trend_std_dev numeric DEFAULT NULL,
+    tmax_trend_min numeric DEFAULT NULL,
+    tmax_trend_max numeric DEFAULT NULL
 );
 COMMIT;

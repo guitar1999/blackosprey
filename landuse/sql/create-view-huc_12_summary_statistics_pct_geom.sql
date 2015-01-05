@@ -1,8 +1,8 @@
 BEGIN;
-DROP VIEW IF EXISTS huc_12_summary_statistics_pct CASCADE;
-CREATE OR REPLACE VIEW huc_12_summary_statistics_pct AS (
+DROP VIEW IF EXISTS huc_12_summary_statistics_pct_geom CASCADE;
+CREATE OR REPLACE VIEW huc_12_summary_statistics_pct_geom AS (
     SELECT
-        huc_12,
+        h.huc_12,
         num_pixels,
         s1992_lc92_11 / num_pixels::numeric * 100 AS s1992_lc92_11_pct,
         s1992_lc92_12 / num_pixels::numeric * 100 AS s1992_lc92_12_pct,
@@ -433,8 +433,13 @@ CREATE OR REPLACE VIEW huc_12_summary_statistics_pct AS (
         tmax_trend_mean,
         tmax_trend_std_dev,
         tmax_trend_min,
-        tmax_trend_max
+        tmax_trend_max, 
+        g.geom
     FROM
-        huc_12_summary_statistics
+        huc_12_summary_statistics h INNER JOIN
+        nhd_hu12_watersheds g
+        ON h.huc_12=g.huc_12
+    WHERE 
+        g.in_study_area = 'Y'
 );
 COMMIT;

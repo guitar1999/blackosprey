@@ -14,7 +14,7 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_all_as_huc8_aggregated_view AS (
         min(h.geom)::geometry AS geom
     FROM 
         avaricosa.avaricosa_all_as_point_view a,
-        public.nhd_hu12_watersheds h
+        public.nhd_hu8_watersheds h
     WHERE
         a.ap_id = ANY (h.avaricosa_ap_id) AND
         a.source_geom = h.avaricosa_source_geom

@@ -8,7 +8,7 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_all_as_huc8_aggregated_view AS (
         array_to_string(array_agg(distinct state), ',') AS state,
         array_to_string(array_agg(id), ',') AS id,
         array_to_string(array_agg(distinct source_geom), ',') AS source_geom,
-        h.huc_8,
+        h.huc_8_num,
         array_to_string(array_agg(distinct symbol_pop_cond), ', ') AS symbol_pop_cond,
         array_length(array_agg(distinct symbol_pop_cond), 1) > 1 AS multiple_conditions,
         min(h.geom)::geometry AS geom
@@ -19,6 +19,6 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_all_as_huc8_aggregated_view AS (
         a.ap_id = ANY (h.avaricosa_ap_id) AND
         a.source_geom = h.avaricosa_source_geom
     GROUP BY 
-        h.huc_8
+        h.huc_8_num
 );
 COMMIT;

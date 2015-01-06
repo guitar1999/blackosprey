@@ -86,6 +86,7 @@ CREATE OR REPLACE VIEW huc_12_summary_statistics_pct_aggregated_modeling AS (
         tmax_trend_std_dev,
         tmax_trend_min,
         tmax_trend_max,
+        a.state,
         a.symbol_pop_cond,
         a.multiple_conditions
     FROM

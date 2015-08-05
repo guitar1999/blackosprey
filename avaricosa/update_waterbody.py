@@ -1,12 +1,14 @@
-import psycopg2
+import psycopg2, sys
 
 db = psycopg2.connect(host='localhost', database='blackosprey',user='jessebishop')
 cursor = db.cursor()
 
-
-sql = """WITH states AS (SELECT DISTINCT state FROM avaricosa_point UNION SELECT DISTINCT state FROM avaricosa_polygon UNION SELECT DISTINCT state FROM avaricosa_line) SELECT DISTINCT state FROM states;"""
-cursor.execute(sql)
-states = cursor.fetchall()
+if len(sys.argv) > 1:
+    states = [(sys.argv[1],)]
+else:
+    sql = """WITH states AS (SELECT DISTINCT state FROM avaricosa_point UNION SELECT DISTINCT state FROM avaricosa_polygon UNION SELECT DISTINCT state FROM avaricosa_line) SELECT DISTINCT state FROM states;"""
+    cursor.execute(sql)
+    states = cursor.fetchall()
 for s in states:
     print s[0]
     # Update points...

@@ -11,6 +11,7 @@ CREATE TABLE avaricosa.avaricosa_line (
     huc_12_name TEXT,
     waterway TEXT,
     reachcode TEXT,
+    nhd_permanent_ TEXT,
     first_obs TEXT,
     first_obs_date DATE,
     last_obs TEXT,

@@ -13,6 +13,7 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_point_view AS (
         huc_12_name,
         waterway,
         reachcode,
+        nhd_permanent_,
         first_obs,
         date_part('decade', first_obs_date) * 10 AS first_obs_decade,
         last_obs,

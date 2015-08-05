@@ -13,6 +13,7 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_all_as_point_no_geom_view AS (
         huc_12_name,
         waterway,
         reachcode,
+        nhd_permanent_,
         first_obs,
         first_obs_decade,
         last_obs,

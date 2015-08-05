@@ -14,6 +14,7 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_all_as_huc12_view AS (
         a.huc_12_name,
         waterway,
         reachcode,
+        nhd_permanent_,
         first_obs,
         first_obs_decade,
         last_obs,

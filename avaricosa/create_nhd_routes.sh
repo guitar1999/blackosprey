@@ -9,6 +9,7 @@ psql -d blackosprey -t -A -c "ALTER TABLE temp_segments_${tt} ADD COLUMN id SERI
 # Find the segment closest to the avaricosa point (use the second query to avoid bad bbox matches but take advantage of the speed of indexed nearest neighbor to limit the number of actual distance calcs that need to be done)
 #psql -d blackosprey -t -A -c "SELECT * INTO temp_segments_${tt}_split FROM temp_segments_${tt} ORDER BY geom <-> (SELECT geom FROM avaricosa_all_as_point_view WHERE primary_key = '$pk') LIMIT 1;"
 psql -d blackosprey -t -A -c "SELECT x.* INTO temp_segments_${tt}_split FROM (SELECT * FROM temp_segments_${tt} ORDER BY geom <-> (SELECT geom FROM avaricosa_all_as_point_view WHERE primary_key = '$pk') LIMIT 10) AS x ORDER BY ST_Distance(x.geom::geography, (SELECT geom::geography FROM avaricosa_all_as_point_view WHERE primary_key = '$pk')) LIMIT 1;"
+#psql -d blackosprey -t -A -c "SELECT * INTO temp_segments_${tt}_split FROM temp_segments_${tt} WHERE id = 38;"
 
 
 # Find the upstream and downstream points

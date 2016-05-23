@@ -9,5 +9,6 @@ CREATE TABLE avaricosa.avaricosa_buffer_table (
     route_source integer,
     route_target integer,
     route geometry(MultiLineString,4326),
-    buffer_geom geometry(MultiPolygon,4326)
+    buffer_geom geometry(MultiPolygon,4326),
+    quality_flag text DEFAULT 'N'
 );

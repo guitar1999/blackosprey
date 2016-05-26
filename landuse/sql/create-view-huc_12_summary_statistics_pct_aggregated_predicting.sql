@@ -88,5 +88,7 @@ CREATE OR REPLACE VIEW huc_12_summary_statistics_pct_aggregated_predicting AS (
         tmax_trend_max
     FROM
         huc_12_summary_statistics h 
+    WHERE 
+        NOT num_pixels = 0
 );
 COMMIT;

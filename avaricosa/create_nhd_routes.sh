@@ -46,8 +46,14 @@ if [ "$sourceid" = "" ]
 then
     sourceid=$(psql -d blackosprey -t -A -c "SELECT id FROM temp_segments_${tt}_vertices_pgr ORDER BY the_geom <-> (SELECT geom FROM temp_segments_${tt}_split_split_point) LIMIT 1;")
 fi
-# let's do some routing!
-targets=$(psql -d blackosprey -t -A -c "SELECT target FROM temp_segments_${tt} WHERE ST_Intersects(geom, (SELECT ST_Buffer(ST_ExteriorRing(geom)::geography, 0.00001)::geometry FROM avaricosa_point_1km_buffer WHERE primary_key = '$pk'));")
+
+#### let's do some routing!
+# Find some targets
+psql -d blackosprey -t -A -c "SELECT id, ST_StartPoint(geom) AS geom INTO temp_segments_${tt}_start_points FROM temp_segments_${tt};"
+psql -d blackosprey -t -A -c "SELECT id, ST_EndPoint(geom) AS geom INTO temp_segments_${tt}_end_points FROM temp_segments_${tt};"
+targets=$(psql -d blackosprey -t -A -c "SELECT source FROM temp_segments_${tt} WHERE id IN (SELECT s.id from temp_segments_${tt}_start_points s LEFT JOIN temp_segments_${tt}_end_points e ON ST_Intersects(s.geom, e.geom) WHERE e.id IS NULL);") # use source rather than target column to get at whole first segment
+# The old way
+# targets_old=$(psql -d blackosprey -t -A -c "SELECT target FROM temp_segments_${tt} WHERE ST_Intersects(geom, (SELECT ST_Buffer(ST_ExteriorRing(geom)::geography, 0.00001)::geometry FROM avaricosa_point_1km_buffer WHERE primary_key = '$pk'));")
 targetstring="array[$(echo $targets | sed 's/ /,/g')]"
 
 psql -d blackosprey -t -A -c "INSERT INTO avaricosa_buffer_table (primary_key, start_point, route_target, route) SELECT '$pk', (SELECT geom FROM temp_segments_${tt}_split_split_point), id1 as path, ST_Multi(st_linemerge(st_union(b.geom))) as geom FROM pgr_kdijkstraPath('SELECT id, source::int4, target::int4, cost::float8 FROM temp_segments_${tt}', $sourceid, $targetstring, false, false ) a, temp_segments_${tt} b WHERE a.id3=b.id GROUP by id1 ORDER by id1;" 

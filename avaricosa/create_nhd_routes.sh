@@ -59,8 +59,15 @@ targetstring="array[$(echo $targets | sed 's/ /,/g')]"
 psql -d blackosprey -t -A -c "INSERT INTO avaricosa_buffer_table (primary_key, start_point, route_target, route) SELECT '$pk', (SELECT geom FROM temp_segments_${tt}_split_split_point), id1 as path, ST_Multi(st_linemerge(st_union(b.geom))) as geom FROM pgr_kdijkstraPath('SELECT id, source::int4, target::int4, cost::float8 FROM temp_segments_${tt}', $sourceid, $targetstring, false, false ) a, temp_segments_${tt} b WHERE a.id3=b.id GROUP by id1 ORDER by id1;" 
 psql -d blackosprey -t -A -c "DELETE FROM avaricosa_buffer_table WHERE primary_key = '$pk' AND NOT ST_Intersects(route, (SELECT the_geom FROM temp_segments_${tt}_vertices_pgr WHERE id = $sourceid));"
  
+# Now buffer the routes
+for abtid in $(psql -d blackosprey -t -A -c "SELECT abt_id FROM avaricosa_buffer_table WHERE primary_key = '$pk';")
+do
+    psql -d blackosprey -c "WITH pct_length AS (SELECT abt_id, 900 / ST_Length(ST_Transform(route, 5070)) AS pct_length FROM avaricosa_buffer_table WHERE abt_id = $abtid) UPDATE avaricosa_buffer_table SET buffer_geom = (SELECT ST_Transform(ST_Multi(ST_Union(ST_Buffer(ST_Line_Substring(ST_LineMerge(ST_Transform(route, 5070)), 1 - CASE WHEN pct_length > 1 THEN 1 ELSE pct_length END / 2, 1), 100, 'endcap=flat join=round'), ST_Buffer(ST_Line_Substring(ST_LineMerge(ST_Transform(route, 5070)), 1 - CASE WHEN pct_length > 1 THEN 1 ELSE pct_length END, 1 - CASE WHEN pct_length > 1 THEN 1 ELSE pct_length END / 2), 100, 'endcap=round join=round'))), 4326) AS geom FROM avaricosa_buffer_table a, pct_length l WHERE ST_GeometryType(ST_LineMerge(route)) = 'ST_LineString' AND a.abt_id = $abtid) WHERE abt_id = $abtid;"
+done
+psql -d blackosprey -t -A -c "DELETE FROM avaricosa_buffer_table WHERE primary_key = '$pk' AND NOT ST_Intersects(buffer_geom, (SELECT the_geom FROM temp_segments_${tt}_vertices_pgr WHERE id = $sourceid));"
 
-
+# Clean up the temp tables
+for i in $(psql -d blackosprey -t -A -c "SELECT tablename FROM pg_tables WHERE tablename LIKE 'temp_segments_${tt}%';"); do psql -d blackosprey -c "DROP TABLE $i;"; done
 
 # this one's bad but not sourceid 11321412050306
 

@@ -44,6 +44,9 @@ WITH ds AS (SELECT h.newid, l.roadid, ST_Distance(ST_Centroid(h.geom)::geography
 -- Buffer the stream segments for extraction
 ALTER TABLE nhd_flowline_all_no_duplicates_100m_segments_exploded ADD COLUMN geom_5070 GEOMETRY(LineString, 5070);
 UPDATE nhd_flowline_all_no_duplicates_100m_segments_exploded SET geom_5070 = ST_Transform(geom, 5070);
+ALTER TABLE nhd_flowline_all_no_duplicates_100m_segments_exploded ADD COLUMN geom_buffer GEOMETRY(Polygon, 5070);
+UPDATE nhd_flowline_all_no_duplicates_100m_segments_exploded SET geom_buffer = ST_Buffer(geom_5070, 100, 'endcap=flat join=round') WHERE ST_IsValid(geom_5070);
+
 SELECT permanent_, newid, ST_Transform(ST_Buffer(ST_Transform(geom, 5070), 100, 'endcap=flat join=round'), 4326) AS geom INTO nhd_flowline_all_no_duplicates_100m_segments_exploded_buffers FROM nhd_flowline_all_no_duplicates_100m_segments_exploded;
 
 SELECT permanent_, newid, ST_Transform(ST_MakeValid(ST_Buffer(ST_MakeValid(ST_Transform(ST_MakeValid(geom), 5070)), 100, 'endcap=flat join=round')), 4326) AS geom INTO nhd_flowline_all_no_duplicates_100m_segments_exploded_buffers FROM nhd_flowline_all_no_duplicates_100m_segments_exploded;

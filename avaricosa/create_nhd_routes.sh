@@ -15,8 +15,8 @@ psql -d blackosprey -t -A -c "SELECT x.* INTO temp_segments_${tt}_split FROM (SE
 # Find the upstream and downstream points
 psql -d blackosprey -t -A -c "SELECT id, ST_PointN(geom, 1) AS geom INTO temp_segments_${tt}_split_point1 FROM temp_segments_${tt}_split;" # this is the upstream point
 psql -d blackosprey -t -A -c "SELECT id, ST_PointN(geom, 2) AS geom INTO temp_segments_${tt}_split_point2 FROM temp_segments_${tt}_split;" # this is the downstream point
-# Find the point on the segment closest to the avaricosa
-psql -d blackosprey -t -A -c "SELECT id, ST_Line_Interpolate_Point(geom, ST_Line_Locate_Point(geom, (SELECT geom FROM avaricosa_all_as_point_view WHERE primary_key = '$pk'))) AS geom INTO temp_segments_${tt}_split_split_point FROM temp_segments_${tt}_split;"
+# Find the point on the segment closest to the avaricosa (sometimes this will be the same as one of the points and if it's point 2, we need to get rid of the segment below it)
+psql -d blackosprey -t -A -c "SELECT t.id, ST_Line_Interpolate_Point(t.geom, ST_Line_Locate_Point(t.geom, (SELECT geom FROM avaricosa_all_as_point_view WHERE primary_key = '$pk'))) AS geom, ST_Intersects(ST_Line_Interpolate_Point(t.geom, ST_Line_Locate_Point(t.geom, (SELECT geom FROM avaricosa_all_as_point_view WHERE primary_key = '$pk'))), x1.geom) AS intersects1, ST_Intersects(ST_Line_Interpolate_Point(t.geom, ST_Line_Locate_Point(t.geom, (SELECT geom FROM avaricosa_all_as_point_view WHERE primary_key = '$pk'))), x2.geom) AS intersects2 INTO temp_segments_${tt}_split_split_point FROM temp_segments_${tt}_split t, temp_segments_${tt}_split_point1 x1, temp_segments_${tt}_split_point2 x2;"
 # Split that segment into two parts
 segmentid=$(psql -d blackosprey -t -A -c "INSERT INTO temp_segments_${tt} (gid, primary_key, geom) SELECT gid, primary_key, ST_Force2D(ST_MakeLine((SELECT geom FROM temp_segments_${tt}_split_point1), (SELECT geom FROM temp_segments_${tt}_split_split_point))) FROM temp_segments_${tt}_split RETURNING id;")
 sid=$(echo $segmentid | awk -F ' ' '{print $1}');
@@ -33,6 +33,9 @@ psql -d blackosprey -t -A -c "SELECT pgr_createTopology('temp_segments_${tt}', 0
 
 # Now delete the extra segment so we only route upstream
 psql -d blackosprey -t -A -c "DELETE FROM temp_segments_${tt} WHERE id = $sid2;"
+# Check to see if we have matching points and delete necessary segments
+if [ $(psql -d blackosprey -t -A -c "SELECT intersects1 FROM temp_segments_${tt}_split_split_point;") == 't' ]; then psql -d blackosprey -t -A -c "DELETE FROM temp_segments_${tt} WHERE id = $sid;"; fi
+if [ $(psql -d blackosprey -t -A -c "SELECT intersects2 FROM temp_segments_${tt}_split_split_point;") == 't' ]; then psql -d blackosprey -c "DELETE FROM temp_segments_${tt} WHERE id = (SELECT id FROM temp_segments_${tt} WHERE ST_Intersects(geom, (SELECT geom FROM temp_segments_${tt}_split_split_point)) AND not ST_Intersects(geom, (SELECT geom FROM temp_segments_${tt}_split_point1)));"; fi
 
 #sourceid=$(psql -d blackosprey -t -A -c "SELECT source FROM temp_segments_${tt} WHERE id = $sid")
 sourceid=$(psql -d blackosprey -t -A -c "SELECT id FROM temp_segments_${tt}_vertices_pgr WHERE ST_Intersects(the_geom, (SELECT geom FROM temp_segments_${tt}_split_split_point));")
@@ -52,6 +55,11 @@ fi
 psql -d blackosprey -t -A -c "SELECT id, ST_StartPoint(geom) AS geom INTO temp_segments_${tt}_start_points FROM temp_segments_${tt};"
 psql -d blackosprey -t -A -c "SELECT id, ST_EndPoint(geom) AS geom INTO temp_segments_${tt}_end_points FROM temp_segments_${tt};"
 targets=$(psql -d blackosprey -t -A -c "SELECT source FROM temp_segments_${tt} WHERE id IN (SELECT s.id from temp_segments_${tt}_start_points s LEFT JOIN temp_segments_${tt}_end_points e ON ST_Intersects(s.geom, e.geom) WHERE e.id IS NULL);") # use source rather than target column to get at whole first segment
+if [ "$pk" == "10100442030105" ]; then 
+    targets='366 642 759'
+elif [ "$pk" == "224992030105" ]; then
+    targets='8 216 218 219 460 919 1006 1041 1301 1305 1400 1408 1601 1605 1896 1972'
+fi
 # The old way
 # targets_old=$(psql -d blackosprey -t -A -c "SELECT target FROM temp_segments_${tt} WHERE ST_Intersects(geom, (SELECT ST_Buffer(ST_ExteriorRing(geom)::geography, 0.00001)::geometry FROM avaricosa_point_1km_buffer WHERE primary_key = '$pk'));")
 targetstring="array[$(echo $targets | sed 's/ /,/g')]"
@@ -62,12 +70,25 @@ psql -d blackosprey -t -A -c "DELETE FROM avaricosa_buffer_table WHERE primary_k
 # Now buffer the routes
 for abtid in $(psql -d blackosprey -t -A -c "SELECT abt_id FROM avaricosa_buffer_table WHERE primary_key = '$pk';")
 do
+    if [ $(psql -d blackosprey -t -A -c "SELECT ST_GeometryType(ST_LineMerge(route)) FROM avaricosa_buffer_table WHERE abt_id = $abtid;") != 'ST_LineString' ]
+    then
+        # This probably means that there's a gap in the route.
+        # Dump the route 
+        psql -d blackosprey -c "WITH l AS (SELECT (ST_Dump(route)).geom AS geom FROM avaricosa_buffer_table WHERE abt_id = $abtid), p AS (SELECT ST_Collect(ST_Transform(ST_StartPoint(geom), 5070)) AS geom FROM l), new_route AS (SELECT ST_LineMerge(ST_Union(ST_Transform(ST_Snap(ST_Transform(l.geom, 5070), ST_Transform(p.geom, 5070), 2), 4326))) AS route FROM l, p) UPDATE avaricosa_buffer_table SET route = ST_Multi(n.route) FROM new_route n WHERE abt_id = $abtid;"
+    fi    
     psql -d blackosprey -c "WITH pct_length AS (SELECT abt_id, 900 / ST_Length(ST_Transform(route, 5070)) AS pct_length FROM avaricosa_buffer_table WHERE abt_id = $abtid) UPDATE avaricosa_buffer_table SET buffer_geom = (SELECT ST_Transform(ST_Multi(ST_Union(ST_Buffer(ST_Line_Substring(ST_LineMerge(ST_Transform(route, 5070)), 1 - CASE WHEN pct_length > 1 THEN 1 ELSE pct_length END / 2, 1), 100, 'endcap=flat join=round'), ST_Buffer(ST_Line_Substring(ST_LineMerge(ST_Transform(route, 5070)), 1 - CASE WHEN pct_length > 1 THEN 1 ELSE pct_length END, 1 - CASE WHEN pct_length > 1 THEN 1 ELSE pct_length END / 2), 100, 'endcap=round join=round'))), 4326) AS geom FROM avaricosa_buffer_table a, pct_length l WHERE ST_GeometryType(ST_LineMerge(route)) = 'ST_LineString' AND a.abt_id = $abtid) WHERE abt_id = $abtid;"
 done
-psql -d blackosprey -t -A -c "DELETE FROM avaricosa_buffer_table WHERE primary_key = '$pk' AND NOT ST_Intersects(buffer_geom, (SELECT the_geom FROM temp_segments_${tt}_vertices_pgr WHERE id = $sourceid));"
+psql -d blackosprey -t -A -c "DELETE FROM avaricosa_buffer_table WHERE primary_key = '$pk' AND NOT ST_Intersects(ST_Transform(buffer_geom, 5070), (SELECT ST_Buffer(ST_Transform(the_geom, 5070), 0.001) FROM temp_segments_${tt}_vertices_pgr WHERE id = $sourceid));"
 
+if [ "$2" != "yes" ]; then
 # Clean up the temp tables
-for i in $(psql -d blackosprey -t -A -c "SELECT tablename FROM pg_tables WHERE tablename LIKE 'temp_segments_${tt}%';"); do psql -d blackosprey -c "DROP TABLE $i;"; done
+    for i in $(psql -d blackosprey -t -A -c "SELECT tablename FROM pg_tables WHERE tablename LIKE 'temp_segments_${tt}%';"); do psql -d blackosprey -c "DROP TABLE $i;"; done
+else
+    echo sourceid is $sourceid
+    echo targets are $targets
+    echo $pk
+    echo $tt
+fi
 
 # this one's bad but not sourceid 11321412050306
 

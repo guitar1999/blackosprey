@@ -30,7 +30,10 @@ def rasterize_huc(huc, edir, coordlist):
     '''Rasterizes a given huc using the coordinates provided.'''
     xmin, ymin, xmax, ymax = coordlist
     # Dump the shape
-    query = """SELECT 1 as dumpid, ST_Transform(ST_Union(ST_MakeValid(buffer_geom)), 5070) AS geom FROM avaricosa_buffer_table WHERE primary_key = '{0}';""".format(huc)
+    if huc == '5977251020002':
+        query = """SELECT 1 as dumpid, ST_Transform(ST_Union(ST_CollectionExtract(ST_MakeValid(buffer_geom), 3)), 5070) AS geom FROM avaricosa_buffer_table WHERE primary_key = '{0}';""".format(huc)
+    else:
+        query = """SELECT 1 as dumpid, ST_Transform(ST_Union(ST_MakeValid(buffer_geom)), 5070) AS geom FROM avaricosa_buffer_table WHERE primary_key = '{0}';""".format(huc)
     command = """/usr/local/pgsql/bin/pgsql2shp -f {0}/avaricosa_buffer_{1}_clip_vector.shp blackosprey "{2}" """.format(edir, huc, query)
     proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     procout = proc.communicate() # Necessary to force wait until process completes (otherwise use subprocess.call())

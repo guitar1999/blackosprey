@@ -2,7 +2,7 @@ BEGIN;
 DROP VIEW IF EXISTS avaricosa.avaricosa_polygon_centroid_view CASCADE;
 CREATE OR REPLACE VIEW avaricosa.avaricosa_polygon_centroid_view AS (
     SELECT 
-        ap_id,
+        a.ap_id,
         town,
         state,
         orig_file,
@@ -13,7 +13,6 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_polygon_centroid_view AS (
         huc_12_name,
         waterway,
         reachcode,
-        nhd_permanent_,
         first_obs,
         date_part('decade', first_obs_date) * 10 AS first_obs_decade,
         last_obs,
@@ -67,9 +66,18 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_polygon_centroid_view AS (
             ELSE
                 date_part('decade', update_last_obs) * 10
         END AS symbol_last_obs_decade,
-        ST_Centroid(geom) AS geom
+        CASE
+            WHEN
+                NOT x.point_geom IS NULL
+            THEN
+                x.point_geom
+            ELSE
+                ST_Centroid(a.geom)
+        END AS geom
     FROM
-        avaricosa.avaricosa_polygon
+        avaricosa.avaricosa_polygon a LEFT JOIN
+        avaricosa.avaricosa_polygon_multi_to_single x ON a.ap_id=x.ap_id
+
 );
 COMMIT;
         

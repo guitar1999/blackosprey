@@ -87,10 +87,12 @@ CREATE OR REPLACE VIEW avaricosa_buffer_summary_statistics_pct_aggregated_modeli
         tmax_trend_min,
         tmax_trend_max,
         a.state,
-        a.symbol_pop_cond
+        a.symbol_pop_cond,
+        r.avg_road_distance
     FROM
         avaricosa_buffer_summary_statistics h INNER JOIN 
         avaricosa_all_as_point_view a
-        ON h.primary_key=a.primary_key
+        ON h.primary_key=a.primary_key LEFT JOIN 
+        avaricosa_buffer_road_distance_summary r ON h.primary_key=r.primary_key
 );
 COMMIT;

@@ -32,7 +32,10 @@ def rasterize_huc(huc, edir, coordlist):
     #print edir
     xmin, ymin, xmax, ymax = coordlist
     # Dump the shape
-    query = """SELECT 1 as dumpid, ST_Transform(ST_Union(ST_MakeValid(buffer_geom)), 4269) AS geom FROM avaricosa_buffer_table WHERE primary_key = '{0}';""".format(huc)
+    if huc == '5977251020002':
+        query = """SELECT 1 as dumpid, ST_Transform(ST_Union(ST_CollectionExtract(ST_MakeValid(buffer_geom), 3)), 4269) AS geom FROM avaricosa_buffer_table WHERE primary_key = '{0}';""".format(huc)
+    else:
+        query = """SELECT 1 as dumpid, ST_Transform(ST_Union(ST_MakeValid(buffer_geom)), 4269) AS geom FROM avaricosa_buffer_table WHERE primary_key = '{0}';""".format(huc)
     command = """/usr/local/pgsql/bin/pgsql2shp -f {0}/avaricosa_buffer_{1}_ned_clip_vector.shp blackosprey "{2}" """.format(edir, huc, query)
     #print command
     proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

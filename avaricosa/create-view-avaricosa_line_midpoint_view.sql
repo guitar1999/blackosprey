@@ -76,7 +76,8 @@ CREATE OR REPLACE VIEW avaricosa.avaricosa_line_midpoint_view AS (
                 ST_Line_Interpolate_Point(ST_LineMerge(geom), 0.5) 
         END AS geom
     FROM
-        avaricosa.avaricosa_line
+        avaricosa.avaricosa_line a LEFT JOIN
+        avaricosa_alternate_geometry x ON a.p
 );
 COMMIT;
         

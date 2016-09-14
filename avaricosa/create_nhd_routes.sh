@@ -43,7 +43,10 @@ sourceid=$(psql -d blackosprey -t -A -c "SELECT id FROM temp_segments_${tt}_vert
 if [ "$sourceid" == "" ]
 then
     echo $pk >> empty_sourceid.list
-    sourceid=$(psql -d blackosprey -t -A -c "SELECT id FROM temp_segments_${tt}_vertices_pgr WHERE ST_Intersects(the_geom, (SELECT ST_Buffer(geom::geography, 0.1)::geometry FROM temp_segments_${tt}_split_split_point));")
+    #sourceid=$(psql -d blackosprey -t -A -c "SELECT id FROM temp_segments_${tt}_vertices_pgr WHERE ST_Intersects(the_geom, (SELECT ST_Buffer(geom::geography, 0.1)::geometry FROM temp_segments_${tt}_split_split_point));")
+    # just move the closest point to where we need it????
+    psql -d blackosprey -t -A -c "UPDATE temp_segments_${tt}_vertices_pgr SET the_geom = (SELECT geom FROM temp_segments_${tt}_split_split_point) WHERE id = (SELECT id FROM temp_segments_${tt}_vertices_pgr ORDER BY the_geom <-> (SELECT geom FROM temp_segments_${tt}_split_split_point) LIMIT 1);"
+    sourceid=$(psql -d blackosprey -t -A -c "SELECT id FROM temp_segments_${tt}_vertices_pgr WHERE ST_Intersects(the_geom, (SELECT geom FROM temp_segments_${tt}_split_split_point));")
 fi
 if [ "$sourceid" = "" ]
 then
@@ -59,6 +62,114 @@ if [ "$pk" == "10100442030105" ]; then
     targets='366 642 759'
 elif [ "$pk" == "224992030105" ]; then
     targets='8 216 218 219 460 919 1006 1041 1301 1305 1400 1408 1601 1605 1896 1972'
+elif [ "$pk" == "642NV10122040104" ]; then
+    targets='18 30 102 138 174'
+elif [ "$pk" == "662NV10322040104" ]; then
+    targets='20 26 37 117 178'
+elif [ "$pk" == '653NV10232040104' ]; then
+    targets='21'
+elif [ "$pk" == '668NV10382040104' ]; then
+    targets='25'
+elif [ "$pk" == '669NV10392040104' ]; then
+    targets='13'
+elif [ "$pk" == '670NV10402040104' ]; then
+    targets='13'
+elif [ "$pk" == '671NV10412040104' ]; then
+    targets='13'
+elif [ "$pk" == '630NV10002040104' ]; then
+    targets='153'
+elif [ "$pk" == '631NV10012040104' ]; then
+    targets='1 2'
+elif [ "$pk" == '632NV10022040104' ]; then
+    targets='76'
+elif [ "$pk" == '635NV10052040104' ]; then
+    targets='71'
+elif [ "$pk" == '688add_10152040104' ]; then
+    targets='12 24 33 112'
+elif [ "$pk" == '693add_10202040104' ]; then
+    targets='301'
+elif [ "$pk" == '702add_10292050205' ]; then
+    targets='95 19'
+elif [ "$pk" == '727add_10542050205' ]; then
+    targets='1 101'
+elif [ "$pk" == '736add_10632050205' ]; then
+    targets='41 61'
+elif [ "$pk" == '737add_10642050205' ]; then
+    targets='47 66'
+elif [ "$pk" == '741add_10682050205' ]; then
+    targets='42 59'
+elif [ "$pk" == '742add_10692050205' ]; then
+    targets='41 59'
+elif [ "$pk" == '743add_10702050205' ]; then
+    targets='41 59'
+elif [ "$pk" == '745add_10722050205' ]; then
+    targets='42 59'
+elif [ "$pk" == '746add_10732050205' ]; then
+    targets='41 59'
+elif [ "$pk" == '748add_10752050205' ]; then
+    targets='44 59'
+elif [ "$pk" == '224992030105' ]; then
+    targets='1896 213 1408 1400 8 1972 919 1305'
+elif [ "$pk" == '655NV10252040104' ]; then
+    targets='75'
+elif [ "$pk" == '2862282070003' ]; then
+    targets='133'
+elif [ "$pk" == '53421727.00003050101' ]; then
+    targets='8'
+elif [ "$pk" == '708add_10352050205' ]; then
+    targets='41 57'
+elif [ "$pk" == '710add_10372050205' ]; then
+    targets='20 45 61'
+elif [ "$pk" == '59021762.00003050101' ]; then
+    targets='119 11 381'
+elif [ "$pk" == '59321727.00003050101' ]; then
+    targets='6'
+elif [ "$pk" == '718add_10452050205' ]; then
+    targets='56 75'
+elif [ "$pk" == '758add_00013050109' ]; then
+    targets='189 5 157'
+elif [ "$pk" == '723add_10502050205' ]; then
+    targets='113 112 106 108 97 41'
+elif [ "$pk" == '724add_10512050205' ]; then
+    targets='104 101 87 6'
+elif [ "$pk" == '725add_10522050205' ]; then
+    targets='101 102 18'
+elif [ "$pk" == '28NV022040104' ]; then
+    targets='43 41 4'
+elif [ "$pk" == '53721762.00003050101' ]; then
+    targets='119 186'
+elif [ "$pk" == '672NV10422040104' ]; then
+    targets='20'
+elif [ "$pk" == '56221762.00003050101' ]; then
+    targets='177 103'
+elif [ "$pk" == '29NV032040104' ]; then
+    targets='320 249'
+elif [ "$pk" == '694add_10212040104' ]; then
+    targets='193 2 99'
+elif [ "$pk" == '644NV10142040104' ]; then
+    targets='52 206 209'
+elif [ "$pk" == '811131022.1ted3040101' ]; then
+    targets='228 354'
+elif [ "$pk" == '17134162030105' ]; then
+    targets='622 399 165 299'
+elif [ "$pk" == '61221762.00003050101' ]; then
+    targets='174 100'
+elif [ "$pk" == '37NV552040104' ]; then
+    targets='180 24 58'
+elif [ "$pk" == '47250613.13040202' ]; then
+    targets='99 195 165'
+elif [ "$pk" == '77136522040104' ]; then
+    targets='137 219'
+elif [ "$pk" == '76136512040104' ]; then
+    targets='298'
+elif [ "$pk" == '889565.000000000002050103' ]; then
+    targets='138 154'
+elif [ "$pk" == '9511285.000000000002030103' ]; then
+    targets='187 192'
+elif [ "$pk" == '11113948.000000000002050101' ]; then
+    targets='620 758 809 147 6'
+elif [ "$pk" == '14250642050301' ]; then
+    targets='75 132 24'
 fi
 # The old way
 # targets_old=$(psql -d blackosprey -t -A -c "SELECT target FROM temp_segments_${tt} WHERE ST_Intersects(geom, (SELECT ST_Buffer(ST_ExteriorRing(geom)::geography, 0.00001)::geometry FROM avaricosa_point_1km_buffer WHERE primary_key = '$pk'));")
@@ -82,7 +193,7 @@ psql -d blackosprey -t -A -c "DELETE FROM avaricosa_buffer_table WHERE primary_k
 
 if [ "$2" != "yes" ]; then
 # Clean up the temp tables
-    for i in $(psql -d blackosprey -t -A -c "SELECT tablename FROM pg_tables WHERE tablename LIKE 'temp_segments_${tt}%';"); do psql -d blackosprey -c "DROP TABLE $i;"; done
+    for i in $(psql -d blackosprey -t -A -c "SELECT tablename FROM pg_tables WHERE tablename LIKE 'temp_segments_$(echo ${tt} | tr '[:upper:]' '[:lower:]')%';"); do psql -d blackosprey -c "DROP TABLE $i;"; done
 else
     echo sourceid is $sourceid
     echo targets are $targets

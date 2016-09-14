@@ -5,7 +5,11 @@ huc=$1
 raster='/Volumes/BlackOsprey/GIS_Data/PRISM/4km/trends_10yr/ppt_1895_2012_10yrTrends.tif'
 echo $huc
 # Dump the watershed
-pgsql2shp -f /Volumes/BlackOsprey/GIS_Data/NHD/avaricosa_buffer_rasters/avaricosa_buffer_${huc}_climate_trend.shp blackosprey "SELECT 1 AS dumpid, ST_Union(ST_MakeValid(buffer_geom)) FROM avaricosa_buffer_table WHERE primary_key = '$huc';"
+if [ "$huc" == '5977251020002' ]; then
+    pgsql2shp -f /Volumes/BlackOsprey/GIS_Data/NHD/avaricosa_buffer_rasters/avaricosa_buffer_${huc}_climate_trend.shp blackosprey "SELECT 1 AS dumpid, ST_Union(ST_CollectionExtract(ST_MakeValid(buffer_geom), 3)) FROM avaricosa_buffer_table WHERE primary_key = '$huc';"
+else
+    pgsql2shp -f /Volumes/BlackOsprey/GIS_Data/NHD/avaricosa_buffer_rasters/avaricosa_buffer_${huc}_climate_trend.shp blackosprey "SELECT 1 AS dumpid, ST_Union(ST_MakeValid(buffer_geom)) FROM avaricosa_buffer_table WHERE primary_key = '$huc';"
+fi
 
 # Get the raster info
 tr=$(gdalinfo $raster | grep 'Pixel Size' | awk -F ' = ' '{print $2}' | tr -d '()-' | sed 's/,/ /g')

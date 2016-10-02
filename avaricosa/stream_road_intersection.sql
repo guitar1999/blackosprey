@@ -17,6 +17,12 @@ SELECT comid, permanent_, fdate, resolution, gnis_id, gnis_name, lengthkm, reach
 ); 
 
 SELECT DISTINCT ON (permanent_) * INTO nhd_flowline_all_no_duplicates FROM nhd_flowline_all_view ORDER BY permanent_;
+ALTER TABLE nhd_flowline_all_no_duplicates ADD COLUMN geom_5070 GEOMETRY(MultiLineString, 5070);
+UPDATE nhd_flowline_all_no_duplicates SET geom_5070 = ST_Force2D(ST_Transform(geom, 5070));
+ALTER TABLE nhd_flowline_all_no_duplicates ADD COLUMN geom_buffer GEOMETRY(MultiPolygon, 5070);
+UPDATE nhd_flowline_all_no_duplicates SET geom_buffer = ST_MakeValid(ST_Multi(ST_Buffer(ST_Force2D(geom_5070), 100, 'endcap=flat join=round'))) WHERE ST_IsValid(geom_5070);
+
+
 
 SELECT comid, permanent_, fdate, resolution, gnis_id, gnis_name, lengthkm, reachcode, flowdir, wbareacomi, wbarea_per, ftype, fcode, shape_leng, enabled, ST_Segmentize(geom::geography, 100)::geometry AS geom INTO nhd_flowline_all_no_duplicates_100m_segments FROM nhd_flowline_all_no_duplicates;
 

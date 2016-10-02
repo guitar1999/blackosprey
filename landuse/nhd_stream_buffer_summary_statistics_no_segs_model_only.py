@@ -1,12 +1,23 @@
 #!/Volumes/BlackOsprey/GIS_Data/bo_python/bin/python
 
-import argparse, glob, math, os, psycopg2, scipy.ndimage, subprocess
+import socket, sys
+if socket.gethostname() == 'JesseMBP-15R.local':
+    sys.path.append('/usr/local/lib/python2.7/site-packages')
+if socket.gethostname() == 'Jesses-MacBook-Pro.local':
+    sys.path.append('/usr/local/lib/python2.7/site-packages')
+import argparse, glob, math, os, psycopg2, subprocess
 import numpy as np
 import pandas as pd
 from osgeo import gdal
+import scipy.ndimage
 
 
-
+def get_val(dict, key):
+    try:
+        a = dict[key]
+    except KeyError:
+        a = 0
+    return a
 
 def bound_calc(func, g, l, res):
     '''Calculates the snapped coordinate, given the appropriate function.'''
@@ -17,7 +28,7 @@ def huc_bounds(huc, cursor):
     # Global extent
     gXmin, gYmin, gXmax, gYmax = (851775, 868245, 2342655, 3087885)
     # Calculate the bounds
-    query = """SELECT ST_XMin(geom) AS llx, ST_YMin(geom) AS lly, ST_XMax(geom) AS urx, ST_YMax(geom) AS ury FROM (SELECT geom_buffer AS geom FROM nhd_flowline_all_no_duplicates_100m_segments_exploded WHERE newid = '{0}') AS tquery;""".format(huc)
+    query = """SELECT ST_XMin(geom) AS llx, ST_YMin(geom) AS lly, ST_XMax(geom) AS urx, ST_YMax(geom) AS ury FROM (SELECT geom_buffer AS geom FROM public.nhd_flowline_all_no_duplicates WHERE permanent_ = '{0}') AS tquery;""".format(huc)
     cursor.execute(query)
     llx, lly, urx, ury = cursor.fetchall()[0]
     xmin = bound_calc(math.floor, gXmin, llx, 30)
@@ -26,12 +37,16 @@ def huc_bounds(huc, cursor):
     ymax = bound_calc(math.ceil, gYmin, ury, 30)
     return (xmin, ymin, xmax, ymax)
 
-def rasterize_huc(huc, edir, coordlist):
+def rasterize_huc(huc, edir, coordlist, hostname):
     '''Rasterizes a given huc using the coordinates provided.'''
     xmin, ymin, xmax, ymax = coordlist
     # Dump the shape
-    query = """SELECT 1 as dumpid, geom_buffer AS geom FROM nhd_flowline_all_no_duplicates_100m_segments_exploded WHERE newid = '{0}';""".format(huc)
-    command = """/usr/local/pgsql/bin/pgsql2shp -f {0}/nhd_stream_buffer_{1}_clip_vector.shp blackosprey "{2}" """.format(edir, huc, query)
+    if hostname == '192.168.1.100':
+        dbadd = '-h 192.168.1.100 -u jessebishop'
+    else:
+        dbadd = ''
+    query = """SELECT 1 as dumpid, geom_buffer AS geom FROM public.nhd_flowline_all_no_duplicates WHERE permanent_ = '{0}';""".format(huc)
+    command = """/usr/local/pgsql/bin/pgsql2shp {3} -f {0}/nhd_stream_buffer_{1}_clip_vector.shp blackosprey "{2}" """.format(edir, huc, query, dbadd)
     proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     procout = proc.communicate() # Necessary to force wait until process completes (otherwise use subprocess.call())
     # Rasterize, remove shape, and store
@@ -59,18 +74,18 @@ def summarize_huc(huc, edir, coordlist, cursor, db):
     # The files to be processed
     files = {2011 : {"lc" : "/Volumes/BlackOsprey/GIS_Data/NLCD/new/2011/nlcd_2011_landcover/nlcd_2011_landcover_2011_edition_2014_03_31/nlcd_2011_landcover_2011_edition_2014_03_31_clip.tif", "cd" : "/Volumes/BlackOsprey/GIS_Data/NLCD/new/2011/nlcd_2011_treecover_analytical/nlcd_2011_USFS_tree_canopy_2011_edition_2014_03_31/analytical_product/nlcd2011_usfs_treecanopy_analytical_3-31-2014_clip.tif"}, 1992 : {"lc92" : "/Volumes/BlackOsprey/GIS_Data/NLCD/new/1992/NLCD92_wall_to_wall_landcover/nlcd92mosaic_clip.tif"}}
     # Set up the db record for the huc
-    try:
-        query = "INSERT INTO nhd_stream_buffer_summary_statistics (primary_key) VALUES ('{0}');".format(huc)
-        cursor.execute(query)
-    except psycopg2.IntegrityError, msg:
-        print "Primary Key {0} is already in the table".format(huc)
-        db.rollback()
-    except Exception, msg:
-        print "There was an unhandled error with Primary Key {0}".format(huc)
-        print str(msg) + "\n"
-        db.rollback()
-    else:
-        db.commit()
+    # try:
+    #     query = "INSERT INTO nhd_stream_buffer_summary_statistics (primary_key) VALUES ('{0}');".format(huc)
+    #     cursor.execute(query)
+    # except psycopg2.IntegrityError, msg:
+    #     print "Primary Key {0} is already in the table".format(huc)
+    #     db.rollback()
+    # except Exception, msg:
+    #     print "There was an unhandled error with Primary Key {0}".format(huc)
+    #     print str(msg) + "\n"
+    #     db.rollback()
+    # else:
+    #     db.commit()
 
     # Read the huc
     huc_handle = gdal.Open("{0}/nhd_stream_buffer_{1}_clip.tif".format(edir, huc))
@@ -78,19 +93,22 @@ def summarize_huc(huc, edir, coordlist, cursor, db):
     zoneid = np.unique(hucdata)
     zoneid = zoneid[np.nonzero(zoneid)]
     num_pixels = np.bincount(np.int_(hucdata.reshape(hucdata.shape[0] * hucdata.shape[1])))[np.int_(zoneid)]
-    query = "UPDATE nhd_stream_buffer_summary_statistics SET (num_pixels) = ({0}) WHERE primary_key = '{1}'".format(num_pixels, huc)
-    cursor.execute(query)
-    db.commit()
+    if not num_pixels:
+        df = pd.concat([pd.Series(huc, name='huc'), pd.Series(0, name='num_pixels'), pd.Series(0, name='pct_forest_1992'), pd.Series(0, name='pct_forest_2011'), pd.Series(0, name='pct_wetland_2011'), pd.Series(0, name='mean_cd_2011')], axis=1)
+        return df
+    # query = "UPDATE nhd_stream_buffer_summary_statistics SET (num_pixels) = ({0}) WHERE primary_key = '{1}'".format(num_pixels, huc)
+    # cursor.execute(query)
+    # db.commit()
     # Loop through the files and do it
     for year in files.keys():
-        print year
+        # print year
         for dt in files[year]:
-            print dt
+            # print dt
             f = files[year][dt]
             # Clip the file
             data_file = clip_data(coordlist, f, edir, huc)
             # Process
-            if dt == "impervious" or dt == "cd":
+            if dt == "cd":
                 # Zone is the huc
                 image_handle = gdal.Open(data_file)
                 image = image_handle.ReadAsArray()
@@ -103,10 +121,10 @@ def summarize_huc(huc, edir, coordlist, cursor, db):
                     ef.close()
                     return
                 mean = scipy.ndimage.mean(image, labels=hucdata, index=zoneid)
-                std_dev = scipy.ndimage.standard_deviation(image, labels=hucdata, index=zoneid)
-                zmin = scipy.ndimage.minimum(image, labels=hucdata, index=zoneid)
-                zmax = scipy.ndimage.maximum(image, labels=hucdata, index=zoneid)
-                query = "UPDATE nhd_stream_buffer_summary_statistics SET (s{0}_{1}_mean, s{0}_{1}_std_dev, s{0}_{1}_min, s{0}_{1}_max) = ({2}, {3}, {4}, {5}) WHERE primary_key = '{6}';".format(year, dt, mean[0], std_dev[0], zmin[0], zmax[0], huc)
+                # std_dev = scipy.ndimage.standard_deviation(image, labels=hucdata, index=zoneid)
+                # zmin = scipy.ndimage.minimum(image, labels=hucdata, index=zoneid)
+                # zmax = scipy.ndimage.maximum(image, labels=hucdata, index=zoneid)
+                # query = "UPDATE nhd_stream_buffer_summary_statistics SET (s{0}_{1}_mean, s{0}_{1}_std_dev, s{0}_{1}_min, s{0}_{1}_max) = ({2}, {3}, {4}, {5}) WHERE primary_key = '{6}';".format(year, dt, mean[0], std_dev[0], zmin[0], zmax[0], huc)
             else:
                 # For DB table, need every value that exists in any of these rasters!
                 lc_handle = gdal.Open(data_file)
@@ -124,20 +142,30 @@ def summarize_huc(huc, edir, coordlist, cursor, db):
                 num_pixels_lc = pzone.value_counts()
                 num_pixels_lc.name = 'num_pixels_lc'
                 pix_dict = num_pixels_lc.to_dict()
-                cols = []
-                vals = []
-                for k,v in pix_dict.items():
-                    if k == 0 or ((dt == 'lc' or dt == 'lcc') and (k < 11 or k > 95)) or (dt == 'lcft' and k > 289):
-                        continue
-                    cols.append("s{0}_{1}_{2}".format(year, dt, k))
-                    vals.append(str(pix_dict[k]))
-                if cols:
-                    query = "UPDATE nhd_stream_buffer_summary_statistics SET ({0}) = ({1}) WHERE primary_key = '{2}';".format(','.join(cols), ','.join(vals), huc)
+                if year == 2011:
+                    pct_forest_11 = (get_val(pix_dict, 41) + get_val(pix_dict, 42) + get_val(pix_dict, 43)) / float(num_pixels)
+                    pct_wetland = (get_val(pix_dict, 90) + get_val(pix_dict, 95)) / float(num_pixels)
                 else:
-                    query = "SELECT CURRENT_TIMESTAMP;"
-            #print query
-            cursor.execute(query)
-            db.commit()
+                    pct_forest_92 = (get_val(pix_dict, 41) + get_val(pix_dict, 42) + get_val(pix_dict, 43)) / float(num_pixels)
+    #outline = """{0},{1},{2},{3},{4}\n""".format(huc, num_pixels, pct_forest, pct_wetland, mean[0])
+    #oc.write(outline)
+    #oc.flush()
+    df = pd.concat([pd.Series(huc, name='huc'), pd.Series(num_pixels, name='num_pixels'), pd.Series(pct_forest_92, name='pct_forest_1992'), pd.Series(pct_forest_11, name='pct_forest_2011'), pd.Series(pct_wetland, name='pct_wetland_2011'), pd.Series(mean[0], name='mean_cd_2011')], axis=1)
+    return df
+            #     cols = []
+            #     vals = []
+            #     for k,v in pix_dict.items():
+            #         if k == 0 or ((dt == 'lc' or dt == 'lcc') and (k < 11 or k > 95)) or (dt == 'lcft' and k > 289):
+            #             continue
+            #         cols.append("s{0}_{1}_{2}".format(year, dt, k))
+            #         vals.append(str(pix_dict[k]))
+            #     if cols:
+            #         query = "UPDATE nhd_stream_buffer_summary_statistics SET ({0}) = ({1}) WHERE primary_key = '{2}';".format(','.join(cols), ','.join(vals), huc)
+            #     else:
+            #         query = "SELECT CURRENT_TIMESTAMP;"
+            # #print query
+            # cursor.execute(query)
+            # db.commit()
 
 
 
@@ -160,21 +188,23 @@ def summarize_huc(huc, edir, coordlist, cursor, db):
     
 
 
-def main(huc, edir, cursor, regen):
+def main(huc, edir, cursor, regen, hostname):
     '''The work gets done here.'''
     print "Primary Key is {0}".format(huc)  
     # Get the snapped raster coordinates
     huc_coords = huc_bounds(huc, cursor)
     # Process the huc raster if necessary
     if not os.path.isfile("{0}/nhd_stream_buffer_{1}_clip.tif".format(edir, huc)) or regen:
-        rasterize_huc(huc, edir, huc_coords)
+        rasterize_huc(huc, edir, huc_coords, hostname)
     # Generate the huc12 summary statistics
     try:
-        summarize_huc(huc, edir, huc_coords, cursor, db)
+        df = summarize_huc(huc, edir, huc_coords, cursor, db)
     except Exception, msg:
         print "ERROR with huc {0}".format(huc)
         print str(msg)
         db.rollback()
+    else:
+        return df
 
 
 
@@ -187,6 +217,8 @@ def main(huc, edir, cursor, regen):
 p = argparse.ArgumentParser(prog="nhd_stream_buffer_summary_statistics.py")
 p.add_argument("huc12", type=str, help="The primary_key id to process.")
 p.add_argument("exportdir", help="The directory that holds the rasterized huc12s.")
+p.add_argument("outcsv", help="The csv to write.")
+p.add_argument("hostname", help="The database host.")
 p.add_argument("-r", "--regen", dest="regen", required=False, action="store_true", help="Force regeneration of rasterized huc12 even if it exists.")
 p.add_argument("-l", "--list", dest="inlist", required=False, action="store_true", help="Providing a list of hucs instead of an individual huc.")
 args = p.parse_args()
@@ -195,15 +227,25 @@ huc = args.huc12
 edir = args.exportdir
 
 # Connect to db
-db = psycopg2.connect(host='localhost', database='blackosprey',user='jessebishop')
+db = psycopg2.connect(host=args.hostname, database='blackosprey',user='jessebishop')
 cursor = db.cursor()
 
 # Run it
+# outcsv = edir + '/landcover_variables.csv'
+outcsv = args.outcsv
+# oc = open(outcsv, 'w')
+# oc.write('key,num_pixels,pct_forest_2011,pct_wetland_2011,mean_cd_2011\n')
+oc = pd.concat([pd.Series(0, name='huc'), pd.Series(0, name='num_pixels'), pd.Series(0, name='pct_forest_1992'), pd.Series(0, name='pct_forest_2011'), pd.Series(0, name='pct_wetland_2011'), pd.Series(0, name='mean_cd_2011')], axis=1)
 if args.inlist:
     for h in open(huc, 'r'):
-        main(h.strip(), edir, cursor, args.regen)
+        df = main(h.strip(), edir, cursor, args.regen, args.hostname)
+        # print df
+        oc = oc.append(df)
 else:
-    main(huc, edir, cursor, args.regen)
+    df = main(huc, edir, cursor, args.regen, args.hostname)
+    oc = oc.append(df)
+# oc.close()
+oc.to_csv(outcsv, index=False)
 
 # Close the db connection.
 cursor.close()

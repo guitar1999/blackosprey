@@ -3,8 +3,12 @@
 import socket, sys
 if socket.gethostname() == 'JesseMBP-15R.local':
     sys.path.append('/usr/local/lib/python2.7/site-packages')
-if socket.gethostname() == 'Jesses-MacBook-Pro.local':
+    srcpath = '/Users/jbishop/Workspace/Projects/av/source'
+elif socket.gethostname() == 'Jesses-MacBook-Pro.local':
     sys.path.append('/usr/local/lib/python2.7/site-packages')
+    srcpath = '/Users/jessebishop/Workspace/Projects/av/source'
+else:
+    srcpath = ''
 import argparse, glob, math, os, psycopg2, scipy.ndimage, subprocess
 import numpy as np
 import pandas as pd
@@ -42,7 +46,7 @@ def rasterize_huc(huc, edir, coordlist, hostname):
         dbadd = '-h 192.168.1.100 -u jessebishop'
     else:
         dbadd = ''
-    query = """SELECT 1 as dumpid, ST_Transform(ST_Union(ST_MakeValid(buffer_geom)), 4269) AS geom FROM avaricosa_buffer_table WHERE primary_key = '{0}';""".format(huc)
+    query = """SELECT 1 as dumpid, ST_Transform(ST_Union(ST_MakeValid(geom_buffer)), 4269) AS geom FROM public.nhd_flowline_all_no_duplicates WHERE permanent_ = '{0}';""".format(huc)
     command = """/usr/local/pgsql/bin/pgsql2shp {3} -f {0}/avaricosa_buffer_{1}_ned_clip_vector.shp blackosprey "{2}" """.format(edir, huc, query, dbadd)
     #print command
     proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -66,7 +70,7 @@ def clip_data(coordlist, infile, edir, huc):
         procout = proc.communicate()
     return outfile
 
-def summarize_huc(huc, edir, coordlist, cursor, db):
+def summarize_huc(huc, edir, coordlist, cursor, db, srcpath):
     '''Generates summary statistics for a huc and puts them in the database.'''
     # The files to be processed
     #files = {'ned' : '/Volumes/BlackOsprey/GIS_Data/USGS/NED/1arcsec_processed/ned_study_area_1arcsec.img', 'slope' : '/Volumes/BlackOsprey/GIS_Data/USGS/NED/1arcsec_processed/slope_study_area_1arcsec.img', 'tri' : '/Volumes/BlackOsprey/GIS_Data/USGS/NED/1arcsec_processed/tri_study_area_1arcsec.img', 'roughness' : '/Volumes/BlackOsprey/GIS_Data/USGS/NED/1arcsec_processed/roughness_study_area_1arcsec.img'}
@@ -98,6 +102,8 @@ def summarize_huc(huc, edir, coordlist, cursor, db):
     # for dt in files.keys():
     #     print dt
     f = files['slope']
+    if srcpath:
+        f = srcpath + '/' + os.path.basename(f) 
     # Clip the file
     data_file = clip_data(coordlist, f, edir, huc)
     # Process
@@ -151,7 +157,7 @@ def main(huc, edir, cursor, regen, hostname):
         rasterize_huc(huc, edir, huc_coords, hostname)
     # Generate the huc12 summary statistics
     try:
-        df = summarize_huc(huc, edir, huc_coords, cursor, db)
+        df = summarize_huc(huc, edir, huc_coords, cursor, db, srcpath)
     except Exception, msg:
         print "ERROR with huc {0}".format(huc)
         print str(msg)

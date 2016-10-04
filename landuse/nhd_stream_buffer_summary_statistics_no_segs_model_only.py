@@ -3,8 +3,12 @@
 import socket, sys
 if socket.gethostname() == 'JesseMBP-15R.local':
     sys.path.append('/usr/local/lib/python2.7/site-packages')
-if socket.gethostname() == 'Jesses-MacBook-Pro.local':
+    srcpath = '/Users/jbishop/Workspace/Projects/av/source'
+elif socket.gethostname() == 'Jesses-MacBook-Pro.local':
     sys.path.append('/usr/local/lib/python2.7/site-packages')
+    srcpath = '/Users/jessebishop/Workspace/Projects/av/source'
+else:
+    srcpath = ''
 import argparse, glob, math, os, psycopg2, subprocess
 import numpy as np
 import pandas as pd
@@ -67,7 +71,7 @@ def clip_data(coordlist, infile, edir, huc):
         procout = proc.communicate()
     return outfile
 
-def summarize_huc(huc, edir, coordlist, cursor, db):
+def summarize_huc(huc, edir, coordlist, cursor, db, srcpath):
     '''Generates summary statistics for a huc and puts them in the database.'''
     # A lookup dictionary for landcover
     landcover_lookup = {"Open Water" : 11, "Perennial Ice/Snow" : 12, "Developed, Open Space" : 21, "Developed, Low Intensity" : 22, "Developed, Medium Intensity" : 23, "Developed, High Intensity" : 24, "Barren Land" : 31, "Deciduous Forest" : 41, "Evergreen Forest" : 42, "Mixed Forest" : 43, "Dwarf Scrub" : 51, "Shrub/Scrub" : 52, "Grassland/Herbaceous" : 71, "Sedge/Herbaceous" : 72, "Lichens" : 73, "Moss" : 74, "Pasture/Hay" : 81, "Cultivated Crops" : 82, "Woody Wetlands" : 90, "Emergent Herbaceous Wetlands" : 95}
@@ -105,6 +109,8 @@ def summarize_huc(huc, edir, coordlist, cursor, db):
         for dt in files[year]:
             # print dt
             f = files[year][dt]
+            if srcpath:
+                f = srcpath + '/' + os.path.basename(f)
             # Clip the file
             data_file = clip_data(coordlist, f, edir, huc)
             # Process
@@ -198,7 +204,7 @@ def main(huc, edir, cursor, regen, hostname):
         rasterize_huc(huc, edir, huc_coords, hostname)
     # Generate the huc12 summary statistics
     try:
-        df = summarize_huc(huc, edir, huc_coords, cursor, db)
+        df = summarize_huc(huc, edir, huc_coords, cursor, db, srcpath)
     except Exception, msg:
         print "ERROR with huc {0}".format(huc)
         print str(msg)

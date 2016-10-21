@@ -1,5 +1,6 @@
 #!/Volumes/BlackOsprey/GIS_Data/bo_python/bin/python
 
+print 'starting import'
 import socket, sys
 if socket.gethostname() == 'JesseMBP-15R.local':
     sys.path.append('/usr/local/lib/python2.7/site-packages')
@@ -14,7 +15,7 @@ import numpy as np
 import pandas as pd
 from osgeo import gdal
 import scipy.ndimage
-
+print 'finished import'
 
 def get_val(dict, key):
     try:
@@ -27,14 +28,16 @@ def bound_calc(func, g, l, res):
     '''Calculates the snapped coordinate, given the appropriate function.'''
     return int(g + (func(abs(l - g) / res) * res))
 
-def huc_bounds(huc, cursor):
+def huc_bounds(huc, db):
     '''Calculates the snapped huc bounds and returns them in a tuple.'''
     # Global extent
     gXmin, gYmin, gXmax, gYmax = (851775, 868245, 2342655, 3087885)
     # Calculate the bounds
     query = """SELECT ST_XMin(geom) AS llx, ST_YMin(geom) AS lly, ST_XMax(geom) AS urx, ST_YMax(geom) AS ury FROM (SELECT geom_buffer AS geom FROM public.nhd_flowline_all_no_duplicates WHERE permanent_ = '{0}') AS tquery;""".format(huc)
+    cursor = db.cursor()
     cursor.execute(query)
     llx, lly, urx, ury = cursor.fetchall()[0]
+    cursor.close()
     xmin = bound_calc(math.floor, gXmin, llx, 30)
     ymin = bound_calc(math.floor, gYmin, lly, 30)
     xmax = bound_calc(math.ceil, gXmin, urx, 30)
@@ -71,7 +74,7 @@ def clip_data(coordlist, infile, edir, huc):
         procout = proc.communicate()
     return outfile
 
-def summarize_huc(huc, edir, coordlist, cursor, db, srcpath):
+def summarize_huc(huc, edir, coordlist, srcpath):
     '''Generates summary statistics for a huc and puts them in the database.'''
     # A lookup dictionary for landcover
     landcover_lookup = {"Open Water" : 11, "Perennial Ice/Snow" : 12, "Developed, Open Space" : 21, "Developed, Low Intensity" : 22, "Developed, Medium Intensity" : 23, "Developed, High Intensity" : 24, "Barren Land" : 31, "Deciduous Forest" : 41, "Evergreen Forest" : 42, "Mixed Forest" : 43, "Dwarf Scrub" : 51, "Shrub/Scrub" : 52, "Grassland/Herbaceous" : 71, "Sedge/Herbaceous" : 72, "Lichens" : 73, "Moss" : 74, "Pasture/Hay" : 81, "Cultivated Crops" : 82, "Woody Wetlands" : 90, "Emergent Herbaceous Wetlands" : 95}
@@ -157,6 +160,8 @@ def summarize_huc(huc, edir, coordlist, cursor, db, srcpath):
     #oc.write(outline)
     #oc.flush()
     df = pd.concat([pd.Series(huc, name='huc'), pd.Series(num_pixels, name='num_pixels'), pd.Series(pct_forest_92, name='pct_forest_1992'), pd.Series(pct_forest_11, name='pct_forest_2011'), pd.Series(pct_wetland, name='pct_wetland_2011'), pd.Series(mean[0], name='mean_cd_2011')], axis=1)
+    os.system('rm -f {0}/nhd_stream_buffer_{1}_clip.tif'.format(edir, huc))
+    os.system('rm -f {0}/nlcd*clip_avaricosa_buffer{1}.tif'.format(edir, huc))
     return df
             #     cols = []
             #     vals = []
@@ -194,17 +199,19 @@ def summarize_huc(huc, edir, coordlist, cursor, db, srcpath):
     
 
 
-def main(huc, edir, cursor, regen, hostname):
+def main(huc, edir, db, regen, hostname):
     '''The work gets done here.'''
     print "Primary Key is {0}".format(huc)  
     # Get the snapped raster coordinates
-    huc_coords = huc_bounds(huc, cursor)
+    huc_coords = huc_bounds(huc, db)
     # Process the huc raster if necessary
     if not os.path.isfile("{0}/nhd_stream_buffer_{1}_clip.tif".format(edir, huc)) or regen:
+        print 'rasterizing'
         rasterize_huc(huc, edir, huc_coords, hostname)
     # Generate the huc12 summary statistics
     try:
-        df = summarize_huc(huc, edir, huc_coords, cursor, db, srcpath)
+        print 'summarizing'
+        df = summarize_huc(huc, edir, huc_coords, srcpath)
     except Exception, msg:
         print "ERROR with huc {0}".format(huc)
         print str(msg)
@@ -234,7 +241,7 @@ edir = args.exportdir
 
 # Connect to db
 db = psycopg2.connect(host=args.hostname, database='blackosprey',user='jessebishop')
-cursor = db.cursor()
+# cursor = db.cursor()
 
 # Run it
 # outcsv = edir + '/landcover_variables.csv'
@@ -244,15 +251,16 @@ outcsv = args.outcsv
 oc = pd.concat([pd.Series(0, name='huc'), pd.Series(0, name='num_pixels'), pd.Series(0, name='pct_forest_1992'), pd.Series(0, name='pct_forest_2011'), pd.Series(0, name='pct_wetland_2011'), pd.Series(0, name='mean_cd_2011')], axis=1)
 if args.inlist:
     for h in open(huc, 'r'):
-        df = main(h.strip(), edir, cursor, args.regen, args.hostname)
+        print 'in loop'
+        df = main(h.strip(), edir, db, args.regen, args.hostname)
         # print df
         oc = oc.append(df)
 else:
-    df = main(huc, edir, cursor, args.regen, args.hostname)
+    df = main(huc, edir, db, args.regen, args.hostname)
     oc = oc.append(df)
 # oc.close()
 oc.to_csv(outcsv, index=False)
 
 # Close the db connection.
-cursor.close()
+# cursor.close()
 db.close()

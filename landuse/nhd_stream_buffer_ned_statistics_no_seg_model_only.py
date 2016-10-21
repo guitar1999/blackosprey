@@ -21,15 +21,17 @@ def bound_calc(func, g, l, res):
     '''Calculates the snapped coordinate, given the appropriate function.'''
     return float(g + (func(abs(l - g) / res) * res))
 
-def huc_bounds(huc, cursor):
+def huc_bounds(huc, db):
     '''Calculates the snapped huc bounds and returns them in a tuple.'''
     # Global extent
     gXmin, gYmin = (-86.00055555556001, 29.9994444)
     # Calculate the bounds
     #query = """SELECT ST_XMin(geom) AS llx, ST_YMin(geom) AS lly, ST_XMax(geom) AS urx, ST_YMax(geom) AS ury FROM (SELECT ST_Transform(ST_Union(ST_MakeValid(buffer_geom)), 4269) AS geom FROM avaricosa_buffer_table WHERE primary_key = '{0}') AS tquery;""".format(huc)
     query = """SELECT ST_XMin(geom) AS llx, ST_YMin(geom) AS lly, ST_XMax(geom) AS urx, ST_YMax(geom) AS ury FROM (SELECT ST_Transform(geom_buffer, 4269) AS geom FROM public.nhd_flowline_all_no_duplicates WHERE permanent_ = '{0}') AS tquery;""".format(huc)
+    cursor = db.cursor()
     cursor.execute(query)
     llx, lly, urx, ury = cursor.fetchall()[0]
+    cursor.close()
     xmin = bound_calc(math.floor, gXmin, llx, 0.000092592592593)
     ymin = bound_calc(math.floor, gYmin, lly, 0.000092592592593)
     xmax = bound_calc(math.ceil, gXmin, urx, 0.000092592592593)
@@ -70,7 +72,7 @@ def clip_data(coordlist, infile, edir, huc):
         procout = proc.communicate()
     return outfile
 
-def summarize_huc(huc, edir, coordlist, cursor, db, srcpath):
+def summarize_huc(huc, edir, coordlist, srcpath):
     '''Generates summary statistics for a huc and puts them in the database.'''
     # The files to be processed
     #files = {'ned' : '/Volumes/BlackOsprey/GIS_Data/USGS/NED/1arcsec_processed/ned_study_area_1arcsec.img', 'slope' : '/Volumes/BlackOsprey/GIS_Data/USGS/NED/1arcsec_processed/slope_study_area_1arcsec.img', 'tri' : '/Volumes/BlackOsprey/GIS_Data/USGS/NED/1arcsec_processed/tri_study_area_1arcsec.img', 'roughness' : '/Volumes/BlackOsprey/GIS_Data/USGS/NED/1arcsec_processed/roughness_study_area_1arcsec.img'}
@@ -124,6 +126,8 @@ def summarize_huc(huc, edir, coordlist, cursor, db, srcpath):
     # cursor.execute(query)
     # db.commit()
     df = pd.concat([pd.Series(huc, name='huc'), pd.Series(num_pixels, name='num_pixels'), pd.Series(mean, name='mean_slope'), pd.Series(zmax, name='max_slope'), pd.Series(std_dev, name='std_dev_slope')], axis=1)
+    os.system("""rm -f {0}/slope_study_area_1arcsec_avaricosa_buffer{1}.vrt""".format(edir, huc))
+    os.system("rm -f {0}/avaricosa_buffer_{1}_ned_clip.tif".format(edir, huc))
     return df
 
 
@@ -147,17 +151,17 @@ def summarize_huc(huc, edir, coordlist, cursor, db, srcpath):
     
 
 
-def main(huc, edir, cursor, regen, hostname):
+def main(huc, edir, db, regen, hostname):
     '''The work gets done here.'''
     print "HUC12 is {0}".format(huc)  
     # Get the snapped raster coordinates
-    huc_coords = huc_bounds(huc, cursor)
+    huc_coords = huc_bounds(huc, db)
     # Process the huc raster if necessary
     if not os.path.isfile("{0}/avaricosa_buffer_{1}_ned_clip.tif".format(edir, huc)) or regen:
         rasterize_huc(huc, edir, huc_coords, hostname)
     # Generate the huc12 summary statistics
     try:
-        df = summarize_huc(huc, edir, huc_coords, cursor, db, srcpath)
+        df = summarize_huc(huc, edir, huc_coords, srcpath)
     except Exception, msg:
         print "ERROR with huc {0}".format(huc)
         print str(msg)
@@ -187,7 +191,7 @@ edir = args.exportdir
 
 # Connect to db
 db = psycopg2.connect(host=args.hostname, database='blackosprey',user='jessebishop')
-cursor = db.cursor()
+#cursor = db.cursor()
 
 # Run it
 outcsv = args.outcsv
@@ -195,14 +199,14 @@ oc = pd.concat([pd.Series(huc, name='huc'), pd.Series(0, name='num_pixels'), pd.
 
 if args.inlist:
     for h in open(huc, 'r'):
-        df = main(h.strip(), edir, cursor, args.regen, args.hostname)
+        df = main(h.strip(), edir, db, args.regen, args.hostname)
         oc = oc.append(df)
 else:
-    df = main(huc, edir, cursor, args.regen, args.hostname)
+    df = main(huc, edir, db, args.regen, args.hostname)
     oc = oc.append(df)
 
 oc.to_csv(outcsv, index=False)
 
 # Close the db connection.
-cursor.close()
+#cursor.close()
 db.close()

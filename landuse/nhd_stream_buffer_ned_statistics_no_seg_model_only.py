@@ -4,11 +4,17 @@ import socket, sys
 if socket.gethostname() == 'JesseMBP-15R.local':
     sys.path.append('/usr/local/lib/python2.7/site-packages')
     srcpath = '/Users/jbishop/Workspace/Projects/av/source'
+    pgpath = '/usr/local/bin/'
+    gdalpath = '/usr/local/bin/'
 elif socket.gethostname() == 'Jesses-MacBook-Pro.local':
     sys.path.append('/usr/local/lib/python2.7/site-packages')
     srcpath = '/Users/jessebishop/Workspace/Projects/av/source'
+    pgpath = '/usr/local/pgsql/bin/'
+    gdalpath = '/usr/local/bin/'
 else:
     srcpath = ''
+    pgpath = '/usr/local/pgsql/bin/'
+    gdalpath = '/Library/Frameworks/GDAL.framework/Programs/'
 import argparse, glob, math, os, psycopg2, scipy.ndimage, subprocess
 import numpy as np
 import pandas as pd
@@ -49,12 +55,12 @@ def rasterize_huc(huc, edir, coordlist, hostname):
     else:
         dbadd = ''
     query = """SELECT 1 as dumpid, ST_Transform(ST_Union(ST_MakeValid(geom_buffer)), 4269) AS geom FROM public.nhd_flowline_all_no_duplicates WHERE permanent_ = '{0}';""".format(huc)
-    command = """/usr/local/pgsql/bin/pgsql2shp {3} -f {0}/avaricosa_buffer_{1}_ned_clip_vector.shp blackosprey "{2}" """.format(edir, huc, query, dbadd)
+    command = """{4}pgsql2shp {3} -f {0}/avaricosa_buffer_{1}_ned_clip_vector.shp blackosprey "{2}" """.format(edir, huc, query, dbadd, pgpath)
     #print command
     proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     procout = proc.communicate() # Necessary to force wait until process completes (otherwise use subprocess.call())
     # Rasterize, remove shape, and store
-    command = """/Library/Frameworks/GDAL.framework/Programs/gdal_rasterize -a dumpid -of GTiff -a_nodata 0 -te {0} {1} {2} {3} -tr 0.000092592592593 0.000092592592593 -ot Byte -co "COMPRESS=LZW" {4}/avaricosa_buffer_{5}_ned_clip_vector.shp {4}/avaricosa_buffer_{5}_ned_clip.tif""".format(xmin, ymin, xmax, ymax, edir, huc)
+    command = """{6}gdal_rasterize -a dumpid -of GTiff -a_nodata 0 -te {0} {1} {2} {3} -tr 0.000092592592593 0.000092592592593 -ot Byte -co "COMPRESS=LZW" {4}/avaricosa_buffer_{5}_ned_clip_vector.shp {4}/avaricosa_buffer_{5}_ned_clip.tif""".format(xmin, ymin, xmax, ymax, edir, huc, gdalpath)
     #print command
     proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     procout1 = proc.communicate()
@@ -67,7 +73,7 @@ def clip_data(coordlist, infile, edir, huc):
     xmin, ymin, xmax, ymax = coordlist
     outfile = """{0}/{1}_avaricosa_buffer{2}.vrt""".format(edir, os.path.splitext(os.path.basename(infile))[0], huc)
     if not os.path.isfile(outfile):
-        command = """/Library/Frameworks/GDAL.framework/Programs/gdalwarp -of "VRT" -te {0} {1} {2} {3} -tr 0.000092592592593 0.000092592592593 -co "COMPRESS=LZW" {4} {5}""".format(xmin, ymin, xmax, ymax, infile, outfile)
+        command = """{6}gdalwarp -of "VRT" -te {0} {1} {2} {3} -tr 0.000092592592593 0.000092592592593 -co "COMPRESS=LZW" {4} {5}""".format(xmin, ymin, xmax, ymax, infile, outfile, gdalpath)
         proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         procout = proc.communicate()
     return outfile

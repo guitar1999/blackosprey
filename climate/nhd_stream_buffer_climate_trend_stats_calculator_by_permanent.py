@@ -7,9 +7,19 @@
 import socket, sys
 if socket.gethostname() == 'JesseMBP-15R.local':
     sys.path.append('/usr/local/lib/python2.7/site-packages')
+    srcpath = '/Users/jbishop/Workspace/Projects/av/source'
+    pgpath = '/usr/local/bin/'
+    gdalpath = '/usr/local/bin/'
 if socket.gethostname() == 'Jesses-MacBook-Pro.local':
     sys.path.append('/usr/local/lib/python2.7/site-packages')
-import glob, scipy.ndimage, psycopg2, os
+    srcpath = '/Users/jessebishop/Workspace/Projects/av/source'
+    pgpath = '/usr/local/pgsql/bin/'
+    gdalpath = '/usr/local/bin/'
+else:
+    srcpath = ''
+    pgpath = '/usr/local/pgsql/bin/'
+    gdalpath = '/Library/Frameworks/GDAL.framework/Programs/'
+import scipy.ndimage, os
 import numpy as np
 from osgeo import gdal
 
@@ -38,26 +48,40 @@ def do_work(pathimg, zone, segment_id, meas, huc):
 
 
 # Main code
-huc = sys.argv[1]
+infile = sys.argv[1]
 edir = sys.argv[2]
-hostname = sys.argv[3]
-outcsv = sys.argv[4]
-pathzone = "{0}/mask_{1}_climate_trend.tif".format(edir, huc)
-zonehandle = gdal.Open(pathzone)
-zone = zonehandle.ReadAsArray()
-# Get the unique ids
-segment_id = np.unique(zone)
-segment_id = segment_id[np.nonzero(segment_id)]
-print huc
-raster_locations = {'ppt' : '/Volumes/BlackOsprey/GIS_Data/PRISM/4km/trends_10yr/ppt_1895_2012_10yrTrends.tif', 'tmin' : '/Volumes/BlackOsprey/GIS_Data/PRISM/4km/trends_10yr/tmin_1895_2012_10yrTrends.tif', 'tmax' : '/Volumes/BlackOsprey/GIS_Data/PRISM/4km/trends_10yr/tmax_1895_2012_10yrTrends.tif'}
-outdict = {}
-for meas, fileloc in raster_locations.iteritems():
-    m, mean = do_work(fileloc, zone, segment_id, meas, huc)
-    outdict[m] = mean
-o = open(outcsv, 'a')
-outline = '''{0},{1},{2},{3}\n'''.format(huc, outdict['ppt'], outdict['tmin'], outdict['tmax'])
-o.write(outline)
+# hostname = sys.argv[3]
+outcsv = sys.argv[3]
+hostname = sys.argv[4]
+username = sys.argv[5]
+o = open(outcsv, 'a')   
+f = open(infile, 'r')
+for huc in f.readlines():
+    huc = huc.replace('\n','')
+    print huc
+    os.system("""/Volumes/BlackOsprey/GIS_Data/git/blackosprey/climate/nhd_stream_buffer_zone_dump_climate_trend_res_by_permanent.sh {0} {1} {2} {3} {4}""".format(huc, edir, hostname, username, srcpath))
+    pathzone = "{0}/mask_{1}_climate_trend.tif".format(edir, huc)
+    zonehandle = gdal.Open(pathzone)
+    zone = zonehandle.ReadAsArray()
+    # Get the unique ids
+    segment_id = np.unique(zone)
+    segment_id = segment_id[np.nonzero(segment_id)]
+    if segment_id:
+        raster_locations = {'ppt' : '/Volumes/BlackOsprey/GIS_Data/PRISM/4km/trends_10yr/ppt_1895_2012_10yrTrends.tif', 'tmin' : '/Volumes/BlackOsprey/GIS_Data/PRISM/4km/trends_10yr/tmin_1895_2012_10yrTrends.tif', 'tmax' : '/Volumes/BlackOsprey/GIS_Data/PRISM/4km/trends_10yr/tmax_1895_2012_10yrTrends.tif'}
+        outdict = {}
+        for meas, fileloc in raster_locations.iteritems():
+            if srcpath:
+                    fileloc = srcpath + '/' + os.path.basename(fileloc)
+            m, mean = do_work(fileloc, zone, segment_id, meas, huc)
+            outdict[m] = mean
+        outline = '''{0},{1},{2},{3}\n'''.format(huc, outdict['ppt'], outdict['tmin'], outdict['tmax'])
+    else:
+        outline = '''{0},-9999,-9999,-9999\n'''.format(huc)
+    o.write(outline)
+    o.flush()
+    os.system("rm -f {0}/mask_{1}_climate_trend.tif".format(edir, huc))
 o.close()
+f.close()
 # cursor.close()
 # db.commit()
 # db.close()
